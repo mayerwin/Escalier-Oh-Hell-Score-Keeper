@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>L'Escalier — Oh Hell score keeper</title>
+
+    <meta
+      name="description"
+      content="An offline-first score keeper for Oh Hell and its cousins: an editable staircase of rounds, two-phase bidding, six languages, and games you can share as a single link."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f4eddf" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="L'Escalier" />
+
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./assets/icons/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="./assets/icons/icon-192.png" sizes="192x192" type="image/png" />
+    <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png" />
+
+    <!-- Fonts are self-hosted, so preload the two faces the first paint needs. -->
+    <link rel="preload" href="./assets/fonts/fraunces-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="./assets/fonts/instrument-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="./styles/app.css" />
+
+    <meta property="og:title" content="L'Escalier — Oh Hell score keeper" />
+    <meta
+      property="og:description"
+      content="Keep score for Oh Hell offline: an editable staircase of rounds, two-phase bidding, and a whole game inside a link."
+    />
+    <meta property="og:type" content="website" />
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <noscript>
+      <div style="padding: 2rem; text-align: center; font-family: system-ui, sans-serif">
+        <h1>L'Escalier</h1>
+        <p>This score keeper needs JavaScript. It runs entirely on your device — nothing is sent anywhere.</p>
+      </div>
+    </noscript>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

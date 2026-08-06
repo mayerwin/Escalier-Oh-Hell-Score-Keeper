@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # No dependencies to install: the app and its tests are dependency-free.
+      - name: Run tests
+        run: npm test
+
+      - name: Verify icons are reproducible from source
+        run: |
+          node tools/gen-icons.mjs
+          if [ -n "$(git status --porcelain assets/icons)" ]; then
+            echo "::error::assets/icons is out of date; run 'npm run icons' and commit the result"
+            git --no-pager diff --stat assets/icons
+            exit 1
+          fi

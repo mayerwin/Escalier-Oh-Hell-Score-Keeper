@@ -1,0 +1,21 @@
+{
+  "name": "escalier-oh-hell-score-keeper",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Offline-first score keeper for Oh Hell (L'Escalier) with an editable round staircase, two-phase bidding, and shareable game links.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://mayerwin.github.io/Escalier-Oh-Hell-Score-Keeper/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mayerwin/Escalier-Oh-Hell-Score-Keeper.git"
+  },
+  "scripts": {
+    "test": "node --test",
+    "serve": "node tools/serve.mjs",
+    "icons": "node tools/gen-icons.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

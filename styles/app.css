@@ -1,0 +1,2089 @@
+/* =========================================================================
+   L'Escalier — Ledger & Baize
+   -------------------------------------------------------------------------
+   A score pad for a card table. Light theme is ruled ledger paper; dark theme
+   is the baize itself. Brass is the single accent in both, and it is spent
+   sparingly: on the thing you are meant to touch next.
+
+   Everything is sized for a phone held in one hand, at a table, in poor light.
+   Tap targets never go below 44px, numerals are always tabular, and the one
+   action that moves the game forward is always the largest thing on screen.
+   ========================================================================= */
+
+/* ------------------------------------------------------------------ fonts */
+
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url('../assets/fonts/fraunces-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url('../assets/fonts/fraunces-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF,
+    U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../assets/fonts/instrument-sans-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../assets/fonts/instrument-sans-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF,
+    U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ----------------------------------------------------------------- tokens */
+
+:root {
+  --font-display: 'Fraunces', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+  --font-ui: 'Instrument Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+  --step-0: 0.8125rem;
+  --step-1: 0.9375rem;
+  --step-2: 1.0625rem;
+  --step-3: 1.375rem;
+  --step-4: 1.75rem;
+  --step-5: 2.5rem;
+
+  --gap-1: 0.375rem;
+  --gap-2: 0.625rem;
+  --gap-3: 0.9375rem;
+  --gap-4: 1.375rem;
+  --gap-5: 2rem;
+
+  --radius-sm: 0.5rem;
+  --radius: 0.875rem;
+  --radius-lg: 1.25rem;
+  --radius-full: 999px;
+
+  --tap: 2.875rem; /* 46px */
+  --shell: 39rem;
+
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --fast: 140ms;
+  --slow: 320ms;
+}
+
+/* Light — ruled ledger paper. */
+:root,
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --paper: #f4eddf;
+  --panel: #fcf8ef;
+  --panel-2: #f0e7d5;
+  --sunk: #ebe1cc;
+
+  --ink: #1f1811;
+  --ink-2: #574a38;
+  --ink-3: #8a7b64;
+  --ink-4: #a9997e;
+
+  --line: #ddceb0;
+  --line-2: #ece2cd;
+
+  --brass: #a8761f;
+  --brass-strong: #7d5510;
+  --brass-soft: rgba(168, 118, 31, 0.12);
+  --brass-edge: rgba(168, 118, 31, 0.34);
+  --on-brass: #fffaf0;
+
+  --good: #2c6a44;
+  --good-soft: rgba(44, 106, 68, 0.12);
+  --bad: #a33526;
+  --bad-soft: rgba(163, 53, 38, 0.11);
+  --warn: #8a5a09;
+  --warn-soft: rgba(168, 118, 31, 0.15);
+
+  --shadow-1: 0 1px 2px rgba(72, 52, 20, 0.09), 0 2px 6px rgba(72, 52, 20, 0.06);
+  --shadow-2: 0 2px 5px rgba(72, 52, 20, 0.11), 0 10px 24px rgba(72, 52, 20, 0.1);
+  --shadow-brass: 0 2px 10px rgba(125, 85, 16, 0.32);
+
+  --rule-alpha: 0.055;
+  --vignette: rgba(120, 92, 40, 0.07);
+}
+
+/* Dark — the baize. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --paper: #10160f;
+  --panel: #19211a;
+  --panel-2: #1f2921;
+  --sunk: #131b14;
+
+  --ink: #f2ece0;
+  --ink-2: #bdb3a0;
+  --ink-3: #8d8472;
+  --ink-4: #6b6455;
+
+  --line: #2d3a2e;
+  --line-2: #232e24;
+
+  --brass: #d9a745;
+  --brass-strong: #edc172;
+  --brass-soft: rgba(217, 167, 69, 0.14);
+  --brass-edge: rgba(217, 167, 69, 0.38);
+  --on-brass: #1a1405;
+
+  --good: #6ec48c;
+  --good-soft: rgba(110, 196, 140, 0.14);
+  --bad: #e8806b;
+  --bad-soft: rgba(232, 128, 107, 0.14);
+  --warn: #e3b45f;
+  --warn-soft: rgba(227, 180, 95, 0.15);
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-2: 0 2px 6px rgba(0, 0, 0, 0.45), 0 12px 28px rgba(0, 0, 0, 0.4);
+  --shadow-brass: 0 2px 12px rgba(217, 167, 69, 0.26);
+
+  --rule-alpha: 0.05;
+  --vignette: rgba(0, 0, 0, 0.4);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
+    --paper: #10160f;
+    --panel: #19211a;
+    --panel-2: #1f2921;
+    --sunk: #131b14;
+
+    --ink: #f2ece0;
+    --ink-2: #bdb3a0;
+    --ink-3: #8d8472;
+    --ink-4: #6b6455;
+
+    --line: #2d3a2e;
+    --line-2: #232e24;
+
+    --brass: #d9a745;
+    --brass-strong: #edc172;
+    --brass-soft: rgba(217, 167, 69, 0.14);
+    --brass-edge: rgba(217, 167, 69, 0.38);
+    --on-brass: #1a1405;
+
+    --good: #6ec48c;
+    --good-soft: rgba(110, 196, 140, 0.14);
+    --bad: #e8806b;
+    --bad-soft: rgba(232, 128, 107, 0.14);
+    --warn: #e3b45f;
+    --warn-soft: rgba(227, 180, 95, 0.15);
+
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-2: 0 2px 6px rgba(0, 0, 0, 0.45), 0 12px 28px rgba(0, 0, 0, 0.4);
+    --shadow-brass: 0 2px 12px rgba(217, 167, 69, 0.26);
+
+    --rule-alpha: 0.05;
+    --vignette: rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* ------------------------------------------------------------------ reset */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100svh;
+  background-color: var(--paper);
+  /* Ruled paper: one hairline per line-height, plus a soft vignette so the
+     sheet reads as a physical object rather than a flat fill. */
+  background-image: radial-gradient(120% 80% at 50% 0%, transparent 40%, var(--vignette) 100%),
+    repeating-linear-gradient(
+      to bottom,
+      rgba(120, 92, 40, var(--rule-alpha)) 0 1px,
+      transparent 1px 1.75rem
+    );
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--step-1);
+  line-height: 1.5;
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+:focus-visible {
+  outline: 2.5px solid var(--brass);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+::selection {
+  background: var(--brass-soft);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ------------------------------------------------------------------ shell */
+
+.shell {
+  max-width: var(--shell);
+  margin-inline: auto;
+  padding-inline: max(0.875rem, env(safe-area-inset-left));
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+  background: linear-gradient(to bottom, var(--paper) 62%, color-mix(in srgb, var(--paper) 70%, transparent) 88%, transparent);
+}
+
+.topbar__inner {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+  min-height: 3rem;
+  max-width: var(--shell);
+  margin-inline: auto;
+  padding-inline: max(0.875rem, env(safe-area-inset-left));
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--step-3);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.wordmark em {
+  font-style: normal;
+  color: var(--brass);
+}
+
+.topbar__title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+
+.topbar__game {
+  font-size: var(--step-0);
+  font-weight: 600;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar__game b {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.iconbtn {
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  flex: 0 0 auto;
+  border-radius: var(--radius);
+  color: var(--ink-2);
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+}
+
+.iconbtn:hover {
+  background: var(--brass-soft);
+  color: var(--brass-strong);
+}
+
+.iconbtn[aria-pressed='true'] {
+  background: var(--brass);
+  color: var(--on-brass);
+}
+
+.iconbtn svg {
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
+/* The brass hairline that separates the head from the table. */
+.rule {
+  height: 2px;
+  border: 0;
+  background: linear-gradient(to right, transparent, var(--brass-edge) 18%, var(--brass-edge) 82%, transparent);
+  opacity: 0.85;
+}
+
+/* Enough room for the sticky action dock to come to rest below the last card
+   rather than permanently covering it. */
+main {
+  padding-bottom: calc(9rem + env(safe-area-inset-bottom));
+}
+
+.view {
+  display: none;
+  animation: view-in var(--slow) var(--ease) both;
+}
+
+.view.is-active {
+  display: block;
+}
+
+@keyframes view-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}
+
+/* ---------------------------------------------------------------- tab bar */
+
+.tabbar {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem max(0.75rem, env(safe-area-inset-left)) calc(0.5rem + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--paper) 55%, transparent);
+  pointer-events: none;
+}
+
+.tabbar__inner {
+  pointer-events: auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.125rem;
+  width: min(var(--shell), 100%);
+  padding: 0.3rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-2);
+}
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  min-height: var(--tap);
+  padding: 0.3rem 0.15rem;
+  border-radius: var(--radius);
+  color: var(--ink-3);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+
+.tab svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.tab[aria-selected='true'] {
+  color: var(--brass-strong);
+  background: var(--brass-soft);
+}
+
+.tab:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+/* -------------------------------------------------------------- headings */
+
+.h {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--step-2);
+  letter-spacing: -0.005em;
+  margin: var(--gap-4) 0 var(--gap-2);
+  color: var(--ink);
+}
+
+.h:first-child {
+  margin-top: var(--gap-3);
+}
+
+.h--lg {
+  font-weight: 900;
+  font-size: var(--step-4);
+  letter-spacing: -0.022em;
+  line-height: 1.1;
+}
+
+.hint {
+  font-size: var(--step-0);
+  line-height: 1.5;
+  color: var(--ink-3);
+  margin-bottom: var(--gap-2);
+}
+
+.hint--center {
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------- panels */
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+}
+
+.panel + .panel {
+  margin-top: var(--gap-2);
+}
+
+.panel__pad {
+  padding: var(--gap-3);
+}
+
+/* A settings-style row: label on the left, control on the right. */
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-3);
+  min-height: var(--tap);
+  padding: 0.5rem var(--gap-3);
+  border-bottom: 1px solid var(--line-2);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.row__label {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--step-1);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.row__label small {
+  display: block;
+  font-size: var(--step-0);
+  font-weight: 400;
+  color: var(--ink-3);
+  line-height: 1.4;
+  margin-top: 0.1rem;
+}
+
+.row__value {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+/* ---------------------------------------------------------------- buttons */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: var(--tap);
+  padding: 0.625rem 1.125rem;
+  border-radius: var(--radius);
+  font-size: var(--step-1);
+  font-weight: 600;
+  text-align: center;
+  transition: transform var(--fast) var(--ease), background var(--fast) var(--ease), border-color var(--fast) var(--ease),
+    opacity var(--fast) var(--ease);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.995);
+}
+
+.btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.btn--block {
+  display: flex;
+  width: 100%;
+}
+
+/* The one action that advances the game. Deliberately loud. */
+.btn--primary {
+  background: linear-gradient(to bottom, var(--brass), var(--brass-strong));
+  color: var(--on-brass);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--step-2);
+  min-height: 3.375rem;
+  box-shadow: var(--shadow-brass);
+  border: 1px solid var(--brass-strong);
+}
+
+.btn--primary:disabled {
+  box-shadow: none;
+}
+
+.btn--ghost {
+  border: 1.5px solid var(--line);
+  color: var(--ink-2);
+  background: var(--panel);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  border-color: var(--brass-edge);
+  color: var(--brass-strong);
+}
+
+.btn--quiet {
+  color: var(--ink-3);
+  padding-inline: 0.75rem;
+}
+
+.btn--quiet:hover:not(:disabled) {
+  color: var(--brass-strong);
+}
+
+.btn--danger {
+  color: var(--bad);
+  border-color: color-mix(in srgb, var(--bad) 40%, transparent);
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: var(--bad-soft);
+  border-color: var(--bad);
+  color: var(--bad);
+}
+
+.btn--dashed {
+  width: 100%;
+  border: 1.75px dashed var(--brass-edge);
+  color: var(--brass-strong);
+  background: transparent;
+  font-weight: 700;
+}
+
+.btn--dashed:hover:not(:disabled) {
+  background: var(--brass-soft);
+}
+
+.btn svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: 0 0 auto;
+}
+
+.btnrow {
+  display: flex;
+  gap: var(--gap-2);
+  margin-top: var(--gap-2);
+}
+
+.btnrow > .btn {
+  flex: 1;
+}
+
+/* The sticky action dock that floats above the tab bar. While it is stuck it
+   sits over the list, so it carries the paper behind it: a button floating on
+   top of half-legible text reads as a rendering bug. */
+.dock {
+  position: sticky;
+  bottom: calc(4.75rem + env(safe-area-inset-bottom));
+  z-index: 20;
+  margin-top: var(--gap-3);
+  padding: 1.5rem 0 var(--gap-1);
+  background: linear-gradient(
+    to top,
+    var(--paper) 62%,
+    color-mix(in srgb, var(--paper) 78%, transparent) 86%,
+    transparent
+  );
+}
+
+/* Long forms put their call to action at the end rather than floating it over
+   the fields the user is still working through. */
+.dock--static {
+  position: static;
+  padding-top: var(--gap-2);
+  background: none;
+}
+
+/* ----------------------------------------------------------- form controls */
+
+.field {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.input {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0.5rem 0.75rem;
+  background: var(--sunk);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  font-size: var(--step-1);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.input::placeholder {
+  color: var(--ink-4);
+  font-weight: 400;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--brass);
+  background: var(--panel);
+}
+
+.input--right {
+  text-align: end;
+}
+
+/* Numeric stepper. */
+.stepper {
+  display: inline-flex;
+  align-items: stretch;
+  background: var(--sunk);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.stepper button {
+  width: var(--tap);
+  min-height: var(--tap);
+  display: grid;
+  place-items: center;
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--brass-strong);
+  transition: background var(--fast) var(--ease);
+}
+
+.stepper button:hover:not(:disabled) {
+  background: var(--brass-soft);
+}
+
+.stepper button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.stepper__value {
+  min-width: 2.75rem;
+  display: grid;
+  place-items: center;
+  padding-inline: 0.25rem;
+  font-size: var(--step-2);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+/* Segmented control. */
+.seg {
+  display: inline-flex;
+  padding: 0.1875rem;
+  gap: 0.125rem;
+  background: var(--sunk);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.seg--block {
+  display: flex;
+  width: 100%;
+}
+
+.seg button {
+  flex: 1;
+  min-height: 2.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: calc(var(--radius) - 0.25rem);
+  font-size: var(--step-0);
+  font-weight: 600;
+  color: var(--ink-3);
+  white-space: nowrap;
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+}
+
+.seg button[aria-pressed='true'] {
+  background: var(--brass);
+  color: var(--on-brass);
+  box-shadow: var(--shadow-1);
+}
+
+/* Checkbox rendered as a card-suit tick. */
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+  min-height: var(--tap);
+  cursor: pointer;
+}
+
+.check input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.check__box {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid var(--line);
+  border-radius: 0.4375rem;
+  background: var(--sunk);
+  color: transparent;
+  transition: all var(--fast) var(--ease);
+}
+
+.check__box svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.check input:checked + .check__box {
+  background: var(--brass);
+  border-color: var(--brass);
+  color: var(--on-brass);
+}
+
+.check input:focus-visible + .check__box {
+  outline: 2.5px solid var(--brass);
+  outline-offset: 2px;
+}
+
+.check__label {
+  font-size: var(--step-1);
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.35;
+}
+
+/* ------------------------------------------------------------ status bars */
+
+.status {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gap-2);
+  padding: 0.75rem var(--gap-3);
+  border-radius: var(--radius);
+  font-size: var(--step-1);
+  font-weight: 600;
+  line-height: 1.45;
+  margin-bottom: var(--gap-2);
+}
+
+.status__icon {
+  flex: 0 0 auto;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.05rem;
+}
+
+.status b {
+  font-variant-numeric: tabular-nums;
+}
+
+.status--ok {
+  background: var(--good-soft);
+  color: var(--good);
+}
+
+.status--warn {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.status--bad {
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+
+.status--info {
+  background: var(--brass-soft);
+  color: var(--brass-strong);
+}
+
+/* The unlocked-editing warning strip. */
+.unlockbar {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+  margin: var(--gap-2) 0;
+  padding: 0.625rem var(--gap-3);
+  border-radius: var(--radius);
+  font-size: var(--step-0);
+  font-weight: 700;
+  color: var(--on-brass);
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--brass) 0 0.75rem,
+    color-mix(in srgb, var(--brass) 82%, #000) 0.75rem 1.5rem
+  );
+  box-shadow: var(--shadow-1);
+}
+
+.unlockbar svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: 0 0 auto;
+}
+
+.unlockbar button {
+  margin-inline-start: auto;
+  padding: 0.25rem 0.75rem;
+  min-height: 2rem;
+  border-radius: var(--radius-full);
+  background: var(--on-brass);
+  color: var(--brass-strong);
+  font-size: var(--step-0);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* -------------------------------------------------------------- round head */
+
+.roundhead {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-3);
+  margin: var(--gap-3) 0 var(--gap-2);
+}
+
+.roundhead__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.roundhead__title {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--step-4);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+}
+
+.roundhead__title em {
+  font-style: normal;
+  color: var(--brass);
+}
+
+.roundhead__sub {
+  font-size: var(--step-0);
+  font-weight: 600;
+  color: var(--ink-3);
+  margin-top: 0.15rem;
+}
+
+/* The card count, drawn as a stack of cards. */
+.cardcount {
+  position: relative;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 3.75rem;
+  height: 4.5rem;
+  border-radius: 0.625rem;
+  background: linear-gradient(160deg, var(--brass), var(--brass-strong));
+  color: var(--on-brass);
+  box-shadow: var(--shadow-brass);
+}
+
+.cardcount::before,
+.cardcount::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+  z-index: -1;
+}
+
+.cardcount::before {
+  transform: rotate(-6deg) translateX(-0.1rem);
+  opacity: 0.45;
+}
+
+.cardcount::after {
+  transform: rotate(4deg) translateX(0.1rem);
+  opacity: 0.28;
+}
+
+.cardcount__n {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--step-4);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.cardcount__label {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  opacity: 0.85;
+}
+
+/* ---------------------------------------------------------- phase stepper */
+
+.phases {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+  margin-bottom: var(--gap-3);
+}
+
+.phase {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--line);
+  background: var(--panel);
+  color: var(--ink-3);
+  font-size: var(--step-0);
+  font-weight: 700;
+  transition: all var(--fast) var(--ease);
+}
+
+.phase__num {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: 0 0 auto;
+  border-radius: var(--radius-full);
+  background: var(--sunk);
+  color: var(--ink-3);
+  font-size: 0.75rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.phase[aria-current='step'] {
+  border-color: var(--brass);
+  background: var(--brass-soft);
+  color: var(--brass-strong);
+}
+
+.phase[aria-current='step'] .phase__num {
+  background: var(--brass);
+  color: var(--on-brass);
+}
+
+.phase.is-complete {
+  color: var(--good);
+  border-color: color-mix(in srgb, var(--good) 35%, transparent);
+}
+
+.phase.is-complete .phase__num {
+  background: var(--good);
+  color: var(--panel);
+}
+
+.phase svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+/* -------------------------------------------------------- player entry card */
+
+.entry {
+  --accent: var(--brass);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+  margin-bottom: var(--gap-2);
+  overflow: hidden;
+  transition: border-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
+}
+
+/* The player whose turn it is to be entered. */
+.entry.is-focus {
+  border-color: var(--brass);
+  box-shadow: var(--shadow-2), inset 0 0 0 1px var(--brass-edge);
+}
+
+.entry.is-out {
+  opacity: 0.62;
+}
+
+.entry__head {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+  padding: 0.625rem var(--gap-3);
+  border-inline-start: 4px solid var(--accent);
+}
+
+.entry__seat {
+  flex: 0 0 auto;
+  width: 1.25rem;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--step-0);
+  color: var(--ink-4);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.entry__name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--step-2);
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.entry__score {
+  flex: 0 0 auto;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--step-1);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+
+.entry__body {
+  padding: 0 var(--gap-3) var(--gap-3);
+}
+
+.entry__label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-2);
+  font-size: var(--step-0);
+  font-weight: 600;
+  color: var(--ink-3);
+  margin-bottom: 0.375rem;
+}
+
+.entry__locked {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: var(--step-0);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+.entry__locked b {
+  display: grid;
+  place-items: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  padding-inline: 0.375rem;
+  border-radius: var(--radius-sm);
+  background: var(--sunk);
+  border: 1.5px solid var(--line);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Role badges: who deals, who opens. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 0 0 auto;
+  height: 1.5rem;
+  padding-inline: 0.5rem;
+  border-radius: var(--radius-full);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badge svg {
+  width: 0.8125rem;
+  height: 0.8125rem;
+}
+
+.badge--dealer {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.badge--lead {
+  background: var(--brass-soft);
+  color: var(--brass-strong);
+  box-shadow: inset 0 0 0 1.5px var(--brass-edge);
+}
+
+.badge--out {
+  background: var(--sunk);
+  color: var(--ink-3);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+}
+
+.dot {
+  flex: 0 0 auto;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: var(--radius-full);
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.14);
+}
+
+/* -------------------------------------------------------------- number chips */
+
+/* The primary input of the whole app: tap a number to lay it down. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.chip {
+  flex: 1 1 auto;
+  min-width: 2.75rem;
+  min-height: var(--tap);
+  padding: 0.25rem 0.375rem;
+  border-radius: 0.625rem;
+  border: 1.5px solid var(--line);
+  background: var(--sunk);
+  color: var(--ink-2);
+  font-family: var(--font-display);
+  font-size: var(--step-2);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  transition: transform var(--fast) var(--ease), background var(--fast) var(--ease), color var(--fast) var(--ease),
+    border-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
+}
+
+.chip:hover:not(:disabled):not([aria-pressed='true']) {
+  border-color: var(--brass-edge);
+  color: var(--brass-strong);
+}
+
+.chip[aria-pressed='true'] {
+  background: linear-gradient(to bottom, var(--brass), var(--brass-strong));
+  border-color: var(--brass-strong);
+  color: var(--on-brass);
+  box-shadow: var(--shadow-brass);
+  animation: chip-lay var(--fast) var(--ease);
+}
+
+@keyframes chip-lay {
+  from {
+    transform: scale(0.9);
+  }
+  60% {
+    transform: scale(1.06);
+  }
+}
+
+/* The bid the dealer is barred from making. */
+.chip.is-forbidden {
+  color: var(--bad);
+  border-color: color-mix(in srgb, var(--bad) 35%, transparent);
+  background: var(--bad-soft);
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.chip:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Live points preview under the chips. */
+.preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-2);
+  margin-top: 0.625rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--line);
+  font-size: var(--step-0);
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.pts {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--step-3);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.pts--pos {
+  color: var(--good);
+}
+.pts--neg {
+  color: var(--bad);
+}
+.pts--zero {
+  color: var(--ink-3);
+}
+
+/* ------------------------------------------------------------- standings */
+
+.board__row {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+  padding: 0.75rem var(--gap-3);
+  border-bottom: 1px solid var(--line-2);
+}
+
+.board__row:last-child {
+  border-bottom: none;
+}
+
+.board__rank {
+  flex: 0 0 auto;
+  width: 1.75rem;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--step-2);
+  color: var(--ink-4);
+  font-variant-numeric: tabular-nums;
+}
+
+.board__row.is-leader .board__rank {
+  color: var(--brass);
+}
+
+.board__name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--step-2);
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board__row.is-leader .board__name {
+  color: var(--brass-strong);
+}
+
+.board__score {
+  flex: 0 0 auto;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--step-3);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.board__crown {
+  width: 1rem;
+  height: 1rem;
+  color: var(--brass);
+  flex: 0 0 auto;
+}
+
+/* --------------------------------------------------------------- history */
+
+.hist {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+  width: 100%;
+  padding: 0.625rem var(--gap-3);
+  border-bottom: 1px solid var(--line-2);
+  text-align: start;
+  transition: background var(--fast) var(--ease);
+}
+
+.hist:last-child {
+  border-bottom: none;
+}
+
+.hist:hover {
+  background: var(--brass-soft);
+}
+
+.hist__n {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  background: var(--sunk);
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--step-0);
+  color: var(--brass-strong);
+  line-height: 1.15;
+}
+
+.hist__n small {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.hist__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+  font-size: var(--step-0);
+  color: var(--ink-2);
+}
+
+.hist__cell {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.2rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.hist__cell b {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.hist__cell i {
+  font-style: normal;
+  font-weight: 700;
+}
+
+.hist__go {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  color: var(--ink-4);
+}
+
+/* ------------------------------------------------------------- staircase */
+
+/* The namesake: the round plan drawn as an actual flight of stairs. */
+.stairs {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.1875rem;
+  overflow-x: auto;
+  padding: var(--gap-3) var(--gap-3) var(--gap-2);
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.stairs__step {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.25rem;
+  width: 1.75rem;
+  border-radius: 0.375rem 0.375rem 0 0;
+  transition: transform var(--fast) var(--ease);
+}
+
+.stairs__step:hover {
+  transform: translateY(-2px);
+}
+
+.stairs__bar {
+  width: 100%;
+  border-radius: 0.3125rem 0.3125rem 0.125rem 0.125rem;
+  background: var(--sunk);
+  border: 1.5px solid var(--line);
+  border-bottom: none;
+  min-height: 0.5rem;
+}
+
+.stairs__step.is-done .stairs__bar {
+  background: linear-gradient(to top, var(--brass-strong), var(--brass));
+  border-color: var(--brass-strong);
+}
+
+.stairs__step.is-current .stairs__bar {
+  background: var(--panel);
+  border: 2px solid var(--brass);
+  border-bottom: none;
+  box-shadow: var(--shadow-brass);
+}
+
+.stairs__step.is-skipped .stairs__bar {
+  background: repeating-linear-gradient(-45deg, var(--line-2) 0 0.25rem, transparent 0.25rem 0.5rem);
+  border-style: dashed;
+}
+
+.stairs__n {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.stairs__step.is-current .stairs__n {
+  color: var(--brass-strong);
+}
+
+.stairs__floor {
+  height: 2px;
+  margin: 0 var(--gap-3) var(--gap-2);
+  background: linear-gradient(to right, var(--brass-edge), transparent);
+}
+
+/* One editable round in the list below the staircase. */
+.plan {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+  width: 100%;
+  padding: 0.625rem var(--gap-3);
+  border-bottom: 1px solid var(--line-2);
+  text-align: start;
+  transition: background var(--fast) var(--ease);
+}
+
+.plan:last-child {
+  border-bottom: none;
+}
+
+.plan:hover {
+  background: var(--brass-soft);
+}
+
+.plan.is-current {
+  background: var(--brass-soft);
+  box-shadow: inset 3px 0 0 var(--brass);
+}
+
+.plan.is-skipped .plan__cards,
+.plan.is-skipped .plan__meta {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.plan__idx {
+  flex: 0 0 auto;
+  width: 2rem;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--step-0);
+  color: var(--ink-4);
+  font-variant-numeric: tabular-nums;
+}
+
+.plan__cards {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-sm);
+  background: var(--sunk);
+  border: 1.5px solid var(--line);
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--step-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.plan.is-done .plan__cards {
+  background: var(--brass);
+  border-color: var(--brass-strong);
+  color: var(--on-brass);
+}
+
+.plan__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.plan__meta {
+  font-size: var(--step-0);
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plan__meta b {
+  color: var(--ink-2);
+  font-weight: 700;
+}
+
+.plan__status {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-4);
+}
+
+.plan.is-current .plan__status {
+  color: var(--brass-strong);
+}
+
+.plan.is-done .plan__status {
+  color: var(--good);
+}
+
+/* ------------------------------------------------------------ game cards */
+
+.gamecard {
+  padding: var(--gap-3);
+  border-bottom: 1px solid var(--line-2);
+}
+
+.gamecard:last-child {
+  border-bottom: none;
+}
+
+.gamecard__top {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-2);
+}
+
+.gamecard__name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--step-2);
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gamecard__when {
+  flex: 0 0 auto;
+  font-size: var(--step-0);
+  color: var(--ink-3);
+}
+
+.gamecard__meta {
+  font-size: var(--step-0);
+  color: var(--ink-3);
+  margin-top: 0.25rem;
+  line-height: 1.5;
+}
+
+.pill {
+  display: inline-block;
+  padding: 0.05rem 0.5rem;
+  border-radius: var(--radius-full);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pill--live {
+  background: var(--brass-soft);
+  color: var(--brass-strong);
+}
+
+.pill--done {
+  background: var(--good-soft);
+  color: var(--good);
+}
+
+/* ------------------------------------------------------------------ chart */
+
+.chartbox {
+  padding: var(--gap-3) 0.5rem 0.5rem;
+}
+
+.chartbox svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.875rem;
+  padding: var(--gap-3) var(--gap-3) 0.25rem;
+}
+
+.legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: var(--step-0);
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.legend__swatch {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 0.25rem;
+  flex: 0 0 auto;
+}
+
+.legend__value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------ empty state */
+
+.empty {
+  padding: var(--gap-5) var(--gap-3);
+  text-align: center;
+  color: var(--ink-3);
+  font-size: var(--step-1);
+  line-height: 1.6;
+}
+
+.empty__pip {
+  font-size: 2rem;
+  color: var(--line);
+  margin-bottom: var(--gap-2);
+  letter-spacing: 0.25rem;
+}
+
+/* ----------------------------------------------------------------- sheet */
+
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  max-width: none;
+  max-height: none;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.sheet::backdrop {
+  background: rgba(20, 14, 4, 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.sheet__panel {
+  width: min(var(--shell), 100%);
+  max-height: min(86svh, 46rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-bottom: none;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow-2);
+  padding: 0.5rem var(--gap-3) calc(var(--gap-4) + env(safe-area-inset-bottom));
+  animation: sheet-up var(--slow) var(--ease);
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(12%);
+    opacity: 0;
+  }
+}
+
+.sheet__grip {
+  width: 2.5rem;
+  height: 0.25rem;
+  margin: 0.375rem auto var(--gap-2);
+  border-radius: var(--radius-full);
+  background: var(--line);
+}
+
+.sheet__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--step-3);
+  letter-spacing: -0.015em;
+  margin-bottom: var(--gap-1);
+}
+
+.sheet__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-1);
+  margin-top: var(--gap-2);
+}
+
+.sheet__action {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--radius);
+  text-align: start;
+  font-size: var(--step-1);
+  font-weight: 600;
+  color: var(--ink);
+  transition: background var(--fast) var(--ease);
+}
+
+.sheet__action:hover {
+  background: var(--brass-soft);
+}
+
+.sheet__action svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: 0 0 auto;
+  color: var(--ink-3);
+}
+
+.sheet__action.is-danger {
+  color: var(--bad);
+}
+
+.sheet__action.is-danger svg {
+  color: var(--bad);
+}
+
+.sheet__action:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Picker list used for choosing a player (dealer, opener). */
+.picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.picker button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: var(--tap);
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--line);
+  background: var(--sunk);
+  font-size: var(--step-1);
+  font-weight: 600;
+  color: var(--ink-2);
+  transition: all var(--fast) var(--ease);
+}
+
+.picker button[aria-pressed='true'] {
+  border-color: var(--brass);
+  background: var(--brass-soft);
+  color: var(--brass-strong);
+}
+
+/* ----------------------------------------------------------------- toast */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  z-index: 70;
+  transform: translate(-50%, 1rem);
+  max-width: min(30rem, calc(100vw - 2rem));
+  padding: 0.6875rem 1.125rem;
+  border-radius: var(--radius-full);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: var(--step-0);
+  font-weight: 600;
+  text-align: center;
+  box-shadow: var(--shadow-2);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--slow) var(--ease), transform var(--slow) var(--ease);
+}
+
+.toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* --------------------------------------------------------- player rows */
+
+.seat {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+  padding: 0.5rem var(--gap-3);
+  border-bottom: 1px solid var(--line-2);
+}
+
+.seat:last-child {
+  border-bottom: none;
+}
+
+.seat__n {
+  flex: 0 0 auto;
+  width: 1.25rem;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--step-0);
+  color: var(--ink-4);
+}
+
+.seat__input {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--tap);
+  padding: 0.25rem 0.5rem;
+  background: transparent;
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: var(--step-2);
+  font-weight: 600;
+}
+
+.seat__input:focus {
+  outline: none;
+  border-color: var(--brass);
+  background: var(--sunk);
+}
+
+.seat__input::placeholder {
+  color: var(--ink-4);
+  font-weight: 400;
+}
+
+/* Dealer radio drawn as a card back. */
+.dealerpick {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.75rem;
+  border-radius: 0.375rem;
+  border: 1.75px solid var(--line);
+  background: var(--sunk);
+  color: var(--ink-4);
+  transition: all var(--fast) var(--ease);
+}
+
+.dealerpick svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.dealerpick[aria-pressed='true'] {
+  border-color: var(--brass-strong);
+  background: linear-gradient(160deg, var(--brass), var(--brass-strong));
+  color: var(--on-brass);
+  box-shadow: var(--shadow-brass);
+}
+
+.seat__moves {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  flex: 0 0 auto;
+}
+
+.seat__moves button {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 1.4375rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--sunk);
+  color: var(--brass-strong);
+}
+
+.seat__moves button svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.seat__moves button:disabled {
+  opacity: 0.28;
+  cursor: not-allowed;
+}
+
+.seat__remove {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-sm);
+  color: var(--bad);
+}
+
+.seat__remove svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/* --------------------------------------------------------------- utility */
+
+.stack > * + * {
+  margin-top: var(--gap-2);
+}
+
+.spread {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-2);
+}
+
+.muted {
+  color: var(--ink-3);
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.mono {
+  font-variant-numeric: tabular-nums;
+}
+
+.wrapword {
+  overflow-wrap: anywhere;
+}
+
+.linkish {
+  color: var(--brass-strong);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ------------------------------------------------------ staggered reveal */
+
+.stagger > * {
+  animation: rise var(--slow) var(--ease) both;
+}
+
+.stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.stagger > *:nth-child(2) {
+  animation-delay: 35ms;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 70ms;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 105ms;
+}
+.stagger > *:nth-child(5) {
+  animation-delay: 140ms;
+}
+.stagger > *:nth-child(6) {
+  animation-delay: 175ms;
+}
+.stagger > *:nth-child(n + 7) {
+  animation-delay: 210ms;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.4rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ------------------------------------------------------------ wider screens */
+
+@media (min-width: 34rem) {
+  :root {
+    --step-5: 3rem;
+  }
+
+  .chips .chip {
+    min-width: 3.25rem;
+  }
+}
