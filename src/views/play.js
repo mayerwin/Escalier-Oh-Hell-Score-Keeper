@@ -17,27 +17,19 @@ import { formatNumber, t } from './../i18n.js';
 import { confirmSheet, toast } from './../sheet.js';
 import * as M from './../model.js';
 import * as store from './../store.js';
-import { badge, dot, heading, hint, panel, points, stepper, status } from './../ui.js';
+import { badge, dot, heading, hint, panel, points, status } from './../ui.js';
 import { openPlayerRoundSheet, openRoundSheet } from './roundsheet.js';
 
-/** Beyond this many cards a chip row stops being faster than a stepper. */
-const CHIP_LIMIT = 15;
-
 /**
- * The core input. Renders 0..max as tappable chips, falling back to a stepper
- * for unusually large hands.
+ * The core input: 0..max as tappable chips, one tap per value.
+ *
+ * Chips are used at every hand size, deliberately. A stepper cannot express
+ * "no value yet" separately from zero — it would start displaying 0 with its
+ * minus button already disabled, so a player bidding zero could never commit
+ * that bid and the round could never be locked. An unset chip row is simply
+ * one with nothing pressed.
  */
 function numberField({ max, value, onPick, forbidden, label, disabled = false }) {
-  if (max > CHIP_LIMIT) {
-    return stepper({
-      value: value ?? 0,
-      min: 0,
-      max,
-      label,
-      onChange: (next) => onPick(next),
-    });
-  }
-
   const chips = el('div', { class: 'chips', role: 'group', 'aria-label': label });
   for (let n = 0; n <= max; n += 1) {
     const isForbidden = forbidden === n;
@@ -48,6 +40,7 @@ function numberField({ max, value, onPick, forbidden, label, disabled = false })
         text: formatNumber(n),
         'aria-pressed': String(value === n),
         'aria-label': isForbidden ? t('play.bids.forbidden', { n }) : undefined,
+        dataset: { fk: `chip:${label}:${n}` },
         disabled: disabled || (isForbidden && value !== n),
         onClick: () => onPick(n),
       })

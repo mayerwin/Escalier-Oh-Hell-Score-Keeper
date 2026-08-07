@@ -686,6 +686,10 @@ export function sanitizeGame(game) {
       const src = r.entries && typeof r.entries === 'object' ? r.entries : {};
       for (const [pid, raw] of Object.entries(src)) {
         if (!raw || typeof raw !== 'object') continue;
+        // Entry keys come from stored or imported payloads. Assigning to
+        // "__proto__" on a plain object would rewrite its prototype rather
+        // than add a key, so refuse the reserved names outright.
+        if (pid === '__proto__' || pid === 'constructor' || pid === 'prototype') continue;
         entries[pid] = {
           bid: Number.isFinite(raw.bid) ? clamp(Math.round(raw.bid), 0, cards) : null,
           tricks: Number.isFinite(raw.tricks) ? clamp(Math.round(raw.tricks), 0, cards) : null,

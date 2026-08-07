@@ -14,7 +14,7 @@ import { renderChartView } from './views/chart.js';
 import { renderGames } from './views/games.js';
 import { renderPlay } from './views/play.js';
 import { renderSettings } from './views/settings.js';
-import { renderSetup, resetDraft } from './views/setup.js';
+import { renderSetup } from './views/setup.js';
 import { renderStairs } from './views/stairs.js';
 import { importFromPayload, openExportSheet, openImportSheet, openShareSheet } from './views/share.js';
 
@@ -142,16 +142,20 @@ function renderTabs() {
   clear(tabbarEl);
   const hasGame = !!store.state.game;
 
-  const inner = el('div', { class: 'tabbar__inner', role: 'tablist', 'aria-label': t('a11y.tabs') });
+  // These are navigation, not ARIA tabs: there are no tabpanels and the views
+  // replace each other wholesale. `aria-current` is the honest mapping —
+  // role="tab" without a matching tabpanel misleads screen readers.
+  const inner = el('div', { class: 'tabbar__inner' });
   for (const tab of store.TABS) {
+    const selected = store.state.view === tab;
     inner.appendChild(
       el(
         'button',
         {
           type: 'button',
           class: 'tab',
-          role: 'tab',
-          'aria-selected': String(store.state.view === tab),
+          'aria-current': selected ? 'page' : null,
+          'data-selected': String(selected),
           disabled: !hasGame,
           onClick: () => store.setView(tab),
         },
@@ -163,13 +167,33 @@ function renderTabs() {
   tabbarEl.appendChild(inner);
 }
 
+/**
+ * Re-render everything, then put keyboard focus back where it was.
+ *
+ * The whole view is rebuilt on every state change, which would otherwise drop
+ * focus to <body> on each tap — unusable with a keyboard or switch control.
+ * Interactive controls carry a stable `data-fk`, so the equivalent node in the
+ * new tree can be found and refocused.
+ */
 function render() {
+  const active = document.activeElement;
+  const focusKey = active && active.dataset ? active.dataset.fk : null;
+
   renderTopbar();
   renderTabs();
 
   const view = VIEWS[store.state.view] || renderGames;
   clear(mainEl);
   mainEl.appendChild(el('div', { class: 'view is-active shell' }, view()));
+
+  if (focusKey) {
+    for (const candidate of mainEl.querySelectorAll('[data-fk]')) {
+      if (candidate.dataset.fk === focusKey && !candidate.disabled) {
+        candidate.focus({ preventScroll: true });
+        break;
+      }
+    }
+  }
 }
 
 /* ------------------------------------------------------- service worker */
@@ -269,10 +293,13 @@ function init() {
   consumeShareLink();
   registerServiceWorker();
 
-  // Leaving the setup screen by any other route should not leave a half-built
-  // draft behind for the next new game.
-  window.addEventListener('pagehide', () => {
-    if (store.state.view !== 'setup') resetDraft();
+  // Another tab may have added, changed or deleted a game; drop the cached
+  // summaries so the library does not show a stale list.
+  window.addEventListener('storage', (event) => {
+    if (!event.key || event.key.startsWith('escalier:')) {
+      storage.invalidateCache();
+      if (store.state.view === 'games') render();
+    }
   });
 }
 

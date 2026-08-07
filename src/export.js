@@ -20,7 +20,14 @@ import { t } from './i18n.js';
  */
 export function csvField(value) {
   let s = value === null || value === undefined ? '' : String(value);
-  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+  // A negative score is an ordinary number and must stay one: prefixing "-8"
+  // with an apostrophe would import it as text and break every sum in the
+  // sheet. Numbers never need quoting either, so they leave here untouched.
+  if (s !== '' && Number.isFinite(Number(s))) return s;
+
+  // Spreadsheets strip leading whitespace before deciding whether a cell is a
+  // formula, so " =cmd|..." is just as dangerous as "=cmd|...".
+  if (/^[\s ]*[=+\-@\t\r]/.test(s)) s = `'${s}`;
   if (/[",\n\r]/.test(s)) s = `"${s.replace(/"/g, '""')}"`;
   return s;
 }

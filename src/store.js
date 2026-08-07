@@ -119,7 +119,7 @@ export function setView(view) {
   state.view = view;
   if (view !== 'board') state.manageSeats = false;
   render();
-  window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+  window.scrollTo(0, 0);
 }
 
 export function toggleUnlocked(force) {

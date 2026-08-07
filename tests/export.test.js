@@ -37,6 +37,27 @@ test('csvField defuses spreadsheet formula injection', () => {
   assert.equal(csvField('-x'), "'-x");
   assert.equal(csvField('@x'), "'@x");
   assert.equal(csvField('=HYPERLINK("http://x")'), '"\'=HYPERLINK(""http://x"")"');
+  // Leading whitespace is stripped by the spreadsheet before it decides.
+  assert.equal(csvField('   =1+1'), "'   =1+1");
+  // A tab is not one of the characters CSV requires quoting, so it stays bare.
+  assert.equal(csvField('\t=1+1'), "'\t=1+1");
+});
+
+test('csvField leaves negative numbers importable as numbers', () => {
+  // Scores go negative constantly in this game; quoting them would turn every
+  // penalty into text and break the sums.
+  assert.equal(csvField(-8), '-8');
+  assert.equal(csvField('-8'), '-8');
+  assert.equal(csvField(-8.5), '-8.5');
+  assert.equal(csvField(0), '0');
+  assert.equal(csvField('+5'), '+5');
+});
+
+test('a CSV export of negative scores contains bare numbers', () => {
+  const game = smallGame();
+  const csv = gameToCsv(game);
+  assert.ok(csv.includes(',-8,'), 'the -8 points cell should not be quoted or escaped');
+  assert.ok(!csv.includes("'-"), 'no numeric cell should be prefixed');
 });
 
 test('toCsv joins with CRLF as the format requires', () => {

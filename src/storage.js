@@ -94,6 +94,11 @@ function invalidate() {
   summaryCache = null;
 }
 
+/** Drop the memoised summaries — used when another tab writes to storage. */
+export function invalidateCache() {
+  invalidate();
+}
+
 export function gameKey(id) {
   return `${GAME_PREFIX}${id}`;
 }

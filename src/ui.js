@@ -46,12 +46,15 @@ export function row(label, subtitle, control) {
  */
 export function stepper({ value, min, max, onChange, format, label }) {
   const display = format ? format(value) : formatNumber(value);
+  // `data-fk` lets the shell put focus back on this exact button after the
+  // re-render its own click triggers.
   return el(
     'div',
     { class: 'stepper', role: 'group', 'aria-label': label || undefined },
     el('button', {
       type: 'button',
-      'aria-label': `−`,
+      'aria-label': label ? `${label} −` : '−',
+      dataset: { fk: `step:${label}:-` },
       disabled: value <= min,
       onClick: () => onChange(Math.max(min, value - 1)),
       text: '−',
@@ -59,7 +62,8 @@ export function stepper({ value, min, max, onChange, format, label }) {
     el('span', { class: 'stepper__value', 'aria-live': 'polite', text: display }),
     el('button', {
       type: 'button',
-      'aria-label': `+`,
+      'aria-label': label ? `${label} +` : '+',
+      dataset: { fk: `step:${label}:+` },
       disabled: value >= max,
       onClick: () => onChange(Math.min(max, value + 1)),
       text: '+',
@@ -81,6 +85,7 @@ export function seg({ options, value, onChange, block = false, label }) {
         type: 'button',
         text: option.label,
         'aria-pressed': String(option.value === value),
+        dataset: { fk: `seg:${label}:${option.value}` },
         onClick: () => onChange(option.value),
       })
     )
