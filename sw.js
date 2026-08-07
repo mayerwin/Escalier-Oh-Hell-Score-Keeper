@@ -14,7 +14,7 @@
  * which `tests/build.test.js` enforces.
  */
 
-const VERSION = '2.0.0';
+const VERSION = '2.0.1';
 const CACHE = `escalier-v${VERSION}`;
 
 /** The shell. If any of these fail to cache, the install fails loudly. */

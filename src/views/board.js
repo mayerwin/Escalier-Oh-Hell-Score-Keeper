@@ -9,9 +9,15 @@ import * as M from './../model.js';
 import * as store from './../store.js';
 import { emptyState, heading, hint, panel, row, stepper } from './../ui.js';
 
-/** Session-local state for the "add a latecomer" form. */
-let newPlayerName = '';
-let newPlayerCarry = 0;
+/**
+ * Session-local state for the "add a latecomer" form, cleared when the open
+ * game changes so a half-typed name never surfaces in a different game.
+ */
+let addForm = { gameId: null, name: '', carry: 0 };
+
+function resetAddForm(gameId) {
+  addForm = { gameId, name: '', carry: 0 };
+}
 
 function standingsPanel(game) {
   const rows = M.standings(game);
@@ -164,11 +170,11 @@ function addPlayerPanel(game) {
     class: 'input',
     type: 'text',
     maxlength: 24,
-    value: newPlayerName,
+    value: addForm.name,
     placeholder: t('setup.players.placeholder', { n: game.players.length + 1 }),
     onInput: (event) => {
       // Deliberately does not re-render: that would drop the caret.
-      newPlayerName = event.target.value;
+      addForm.name = event.target.value;
     },
   });
 
@@ -179,12 +185,12 @@ function addPlayerPanel(game) {
       t('board.addPlayer.carry'),
       null,
       stepper({
-        value: newPlayerCarry,
+        value: addForm.carry,
         min: -999,
         max: 999,
         label: t('board.addPlayer.carry'),
         onChange: (v) => {
-          newPlayerCarry = v;
+          addForm.carry = v;
           store.render();
         },
       })
@@ -199,14 +205,13 @@ function addPlayerPanel(game) {
           class: 'btn btn--dashed',
           disabled: game.players.length >= M.MAX_PLAYERS,
           onClick: () => {
-            const name = (newPlayerName || '').trim() || t('setup.players.placeholder', { n: game.players.length + 1 });
-            const added = store.addPlayer(name, newPlayerCarry);
+            const name = addForm.name.trim() || t('setup.players.placeholder', { n: game.players.length + 1 });
+            const added = store.addPlayer(name, addForm.carry);
             if (!added) {
               toast(t('setup.players.max'));
               return;
             }
-            newPlayerName = '';
-            newPlayerCarry = 0;
+            resetAddForm(game.id);
             store.render();
             toast(t('board.addPlayer.added', { name }));
           },
@@ -221,6 +226,8 @@ function addPlayerPanel(game) {
 export function renderBoard() {
   const game = store.state.game;
   if (!game) return emptyState(t('play.noGame.body'));
+
+  if (addForm.gameId !== game.id) resetAddForm(game.id);
 
   const progress = M.progress(game);
   const root = el('div', null, heading(t('board.title'), true));

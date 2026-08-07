@@ -15,8 +15,11 @@ import * as store from './../store.js';
 import { emptyState, heading, hint, panel, row, seg, stepper } from './../ui.js';
 import { openRoundSheet } from './roundsheet.js';
 
-/** Card count for the "add a round at the end" control; session-local. */
-let appendCards = null;
+/**
+ * Card count for the "add a round at the end" control. Session-local, and
+ * re-seeded per game so switching games does not carry a stale number over.
+ */
+let appendState = { gameId: null, cards: 1 };
 
 const BAR_MIN = 10;
 const BAR_RANGE = 58;
@@ -189,9 +192,13 @@ export function renderStairs() {
     .filter((r) => r.phase !== M.PHASE.SKIPPED)
     .reduce((sum, r) => sum + r.cards * game.players.length, 0);
 
-  if (appendCards === null) {
-    appendCards = game.rounds.length ? game.rounds[game.rounds.length - 1].cards : 1;
+  if (appendState.gameId !== game.id) {
+    appendState = {
+      gameId: game.id,
+      cards: game.rounds.length ? game.rounds[game.rounds.length - 1].cards : 1,
+    };
   }
+  const appendCards = appendState.cards;
 
   const root = el('div', null, heading(t('stairs.title'), true), hint(t('stairs.hint')));
 
@@ -230,7 +237,7 @@ export function renderStairs() {
           max: M.MAX_CARDS,
           label: t('stairs.appendCards'),
           onChange: (v) => {
-            appendCards = v;
+            appendState.cards = v;
             store.render();
           },
         })

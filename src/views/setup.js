@@ -27,8 +27,12 @@ function newDraft() {
     players: Array.from({ length: DEFAULT_SEATS }, (_, i) => ({ name: '', color: M.PALETTE[i] })),
     cfg: M.defaultConfig(),
     planSpec: M.defaultPlanSpec(),
-    /** Seat that deals the first hand. */
-    dealerSeat: 0,
+    /**
+     * The player who deals the first hand, held by reference rather than by
+     * seat number: reordering or removing a player must not silently hand the
+     * deal to whoever ends up standing in that position.
+     */
+    dealer: null,
     /** When true the tick column designates the opener rather than the dealer. */
     pickOpener: false,
   };
@@ -39,8 +43,14 @@ function ensureDraft() {
   return draft;
 }
 
+/** Seat of the opening dealer, falling back to the first seat. */
+function dealerIndex(d) {
+  const i = d.players.indexOf(d.dealer);
+  return i < 0 ? 0 : i;
+}
+
 function openerSeat(d) {
-  return (d.dealerSeat + 1) % d.players.length;
+  return (dealerIndex(d) + 1) % d.players.length;
 }
 
 function seatLabel(d, index) {
@@ -51,7 +61,7 @@ function playersPanel(d) {
   const box = panel();
 
   d.players.forEach((player, index) => {
-    const designated = d.pickOpener ? openerSeat(d) === index : d.dealerSeat === index;
+    const designated = d.pickOpener ? openerSeat(d) === index : dealerIndex(d) === index;
 
     box.appendChild(
       el(
@@ -81,7 +91,10 @@ function playersPanel(d) {
               ? t('a11y.setLead', { name: seatLabel(d, index) })
               : t('a11y.setDealer', { name: seatLabel(d, index) }),
             onClick: () => {
-              d.dealerSeat = d.pickOpener ? (index - 1 + d.players.length) % d.players.length : index;
+              // Tapping the column designates whichever role the checkbox
+              // selects; the other is derived from it.
+              const seat = d.pickOpener ? (index - 1 + d.players.length) % d.players.length : index;
+              d.dealer = d.players[seat];
               store.render();
             },
           },
@@ -128,7 +141,9 @@ function playersPanel(d) {
                 'aria-label': `${t('common.remove')} — ${seatLabel(d, index)}`,
                 onClick: () => {
                   d.players.splice(index, 1);
-                  if (d.dealerSeat >= d.players.length) d.dealerSeat = 0;
+                  // If the dealer themselves was removed, the deal falls back
+                  // to the first seat; otherwise it stays with the same person.
+                  if (!d.players.includes(d.dealer)) d.dealer = d.players[0];
                   store.render();
                 },
               },
@@ -143,7 +158,7 @@ function playersPanel(d) {
 }
 
 function dealPanel(d) {
-  const dealer = seatLabel(d, d.dealerSeat);
+  const dealer = seatLabel(d, dealerIndex(d));
   const opener = seatLabel(d, openerSeat(d));
 
   return panel(
@@ -389,7 +404,11 @@ export function renderSetup() {
         style: { 'margin-top': '0.625rem' },
         disabled: d.players.length >= M.MAX_PLAYERS,
         onClick: () => {
-          d.players.push({ name: '', color: M.PALETTE[d.players.length % M.PALETTE.length] });
+          // Take the first unused colour, not the one at this index — after a
+          // removal those differ, and two players would share a dot.
+          const used = new Set(d.players.map((p) => p.color));
+          const color = M.PALETTE.find((c) => !used.has(c)) || M.PALETTE[d.players.length % M.PALETTE.length];
+          d.players.push({ name: '', color });
           store.render();
         },
       },
@@ -435,7 +454,7 @@ export function renderSetup() {
             });
             game.planSpec = { ...d.planSpec };
             // createGame assigned ids; point the first deal at the chosen seat.
-            const seat = Math.min(d.dealerSeat, game.players.length - 1);
+            const seat = Math.min(dealerIndex(d), game.players.length - 1);
             game.firstDealerId = game.players[seat].id;
             M.normalizeDealers(game);
 
