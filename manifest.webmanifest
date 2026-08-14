@@ -1,0 +1,35 @@
+{
+  "name": "L'Escalier — Oh Hell score keeper",
+  "short_name": "L'Escalier",
+  "description": "Offline score keeper for Oh Hell and its cousins, with an editable staircase of rounds and shareable game links.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f4eddf",
+  "theme_color": "#f4eddf",
+  "categories": ["games", "utilities"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "./assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

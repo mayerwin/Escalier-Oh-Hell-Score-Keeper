@@ -1,0 +1,15 @@
+﻿node_modules/
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/
+
+# v1 artifact kept locally as a reference, not part of the app
+escalier-1.html
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+.playwright/

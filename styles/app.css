@@ -1,0 +1,2922 @@
+/* =========================================================================
+   L'Escalier — Ledger & Baize
+   -------------------------------------------------------------------------
+   A score pad for a card table. Light is ruled ledger paper; dark is the
+   baize itself. Brass is the single accent in both, and it is spent sparingly:
+   on the thing you are meant to touch next.
+
+   Three rules govern this sheet, and nothing is placed outside them.
+
+   1. ONE SPACING SCALE.  Every margin, gap and padding is a --s* token. There
+      are no loose values in here and no inline `style` objects in the views.
+
+   2. EVERY LIST IS A LEDGER.  Rows of a list share one column template — the
+      pip, the name, the numbers, the action — so seat numbers, names and
+      scores line up in a straight column all the way down the screen. A brass
+      hairline (the ledger's margin rule) is drawn at the column boundary, so
+      the grid is not merely obeyed, it is visible.
+
+   3. BASELINES, NOT BOXES.  Where a display face sits beside a UI face they
+      are stacked on their own lines with their own leading, or aligned on a
+      shared first baseline. They are never centred against each other inside
+      one flex row: two fonts at two sizes have two optical centres and the
+      result always looks like a mistake, because it is one.
+
+   Everything is sized for a phone held in one hand, at a table, in poor light.
+   Tap targets never go below 44px, numerals are always tabular, and the one
+   action that moves the game forward is always the largest thing on screen.
+   ========================================================================= */
+
+/* ------------------------------------------------------------------ fonts */
+
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url('../assets/fonts/fraunces-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url('../assets/fonts/fraunces-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF,
+    U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../assets/fonts/instrument-sans-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../assets/fonts/instrument-sans-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF,
+    U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ----------------------------------------------------------------- tokens */
+
+:root {
+  --font-display: 'Fraunces', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+  --font-ui: 'Instrument Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+  /* Type. Seven sizes, and the whole app is built from them. */
+  --t-micro: 0.6875rem; /* 11 — eyebrows, badges, captions under a number   */
+  --t-small: 0.8125rem; /* 13 — secondary copy, meta lines                  */
+  --t-body: 0.9375rem; /*  15 — the default                                */
+  --t-lead: 1.0625rem; /*  17 — names, section headings                    */
+  --t-title: 1.375rem; /*  22 — sheet titles, big numbers in a row          */
+  --t-hero: 1.75rem; /*    28 — the one title on a screen                  */
+  --t-mega: 2.375rem; /*   38 — the card count                             */
+
+  /* Space. Nothing in this file uses a value that is not on this scale. */
+  --s0: 0.125rem;
+  --s1: 0.25rem;
+  --s2: 0.375rem;
+  --s3: 0.5rem;
+  --s4: 0.75rem;
+  --s5: 1rem;
+  --s6: 1.5rem;
+  --s7: 2rem;
+
+  --radius-sm: 0.4375rem;
+  --radius: 0.75rem;
+  --radius-lg: 1.125rem;
+  --radius-full: 999px;
+
+  /* The rhythm unit. A list row, a tap target and a chip are all one of these,
+     so a column of rows measures out in whole units and the eye can find the
+     next line without hunting. */
+  --tap: 2.875rem; /* 46px — the floor for anything touchable */
+  --row: 2.875rem;
+  --shell: 39rem;
+  --gutter: 0.875rem; /* shell inline padding */
+  --pad-x: 0.625rem; /* inline padding of a row inside a panel */
+
+  /* The shared ledger columns. Every list obeys these, which is why the
+     numbers line up between one list and the next as well as within one. */
+  --col-grip: 1.5rem;
+  --col-pip: 1.75rem;
+  --col-made: 3.25rem;
+  --col-score: 3.25rem;
+  --col-act: 2.875rem;
+
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --fast: 140ms;
+  --slow: 300ms;
+}
+
+/* Light — ruled ledger paper. */
+:root,
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --paper: #f3ecdd;
+  --panel: #fcf8ef;
+  --panel-2: #f0e7d5;
+  --sunk: #eae0ca;
+
+  --ink: #1f1811;
+  --ink-2: #574a38;
+  /* Secondary ink is held above 4.5:1 against the *darkest* surface it ever
+     lands on, not against --panel: hints sit on --paper, segment labels and
+     placeholders sit on --sunk, and column heads sit on --brass-wash. Held to
+     panel alone, every one of those fell to between 3.8:1 and 4.4:1.
+     --ink-4 is the same ink one step lighter, for de-emphasised ordinals. */
+  --ink-3: #6d5f47;
+  --ink-4: #756648;
+
+  --line: #dccfb2;
+  --line-2: #ebe1cc;
+  /* Boundaries of things you can actually touch need 3:1, unlike the soft
+     rules around decorative panels. */
+  --line-strong: #9d8e6e;
+
+  /* Deep enough to carry --on-brass at 4.7:1. At the old #a8761f the label of
+     the primary action — the most important words on the screen — sat at
+     3.8:1 on its own button, and so did every pressed segment and the card
+     count. Everything drawn *in* brass on paper gains from the same step. */
+  --brass: #966819;
+  --brass-strong: #7d5510;
+  --brass-soft: rgba(150, 104, 25, 0.13);
+  --brass-wash: rgba(150, 104, 25, 0.075);
+  --brass-edge: rgba(150, 104, 25, 0.36);
+  --on-brass: #fffaf0;
+
+  --good: #2c6a44;
+  --good-soft: rgba(44, 106, 68, 0.12);
+  --bad: #a33526;
+  --bad-soft: rgba(163, 53, 38, 0.11);
+  --warn: #805207;
+  --warn-soft: rgba(150, 104, 25, 0.15);
+
+  --shadow-1: 0 1px 2px rgba(72, 52, 20, 0.07), 0 2px 6px rgba(72, 52, 20, 0.05);
+  --shadow-2: 0 2px 5px rgba(72, 52, 20, 0.11), 0 10px 24px rgba(72, 52, 20, 0.1);
+  --shadow-brass: 0 1px 2px rgba(125, 85, 16, 0.3), 0 4px 14px rgba(125, 85, 16, 0.26);
+
+  --rule-alpha: 0.05;
+  --vignette: rgba(120, 92, 40, 0.08);
+}
+
+/* Dark — the baize. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --paper: #0f150f;
+  --panel: #1a221b;
+  --panel-2: #212b22;
+  --sunk: #141c15;
+
+  --ink: #f2ece0;
+  --ink-2: #bdb3a0;
+  --ink-3: #9a9180;
+  --ink-4: #99907b;
+
+  --line: #2f3d30;
+  --line-2: #253026;
+  --line-strong: #74705d;
+
+  --brass: #d9a745;
+  --brass-strong: #edc172;
+  --brass-soft: rgba(217, 167, 69, 0.14);
+  --brass-wash: rgba(217, 167, 69, 0.07);
+  --brass-edge: rgba(217, 167, 69, 0.38);
+  --on-brass: #1a1405;
+
+  --good: #6ec48c;
+  --good-soft: rgba(110, 196, 140, 0.14);
+  --bad: #e8806b;
+  --bad-soft: rgba(232, 128, 107, 0.14);
+  --warn: #e3b45f;
+  --warn-soft: rgba(227, 180, 95, 0.15);
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-2: 0 2px 6px rgba(0, 0, 0, 0.45), 0 12px 28px rgba(0, 0, 0, 0.4);
+  --shadow-brass: 0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 16px rgba(217, 167, 69, 0.22);
+
+  --rule-alpha: 0.045;
+  --vignette: rgba(0, 0, 0, 0.45);
+}
+
+/* The dark palette lives only in the [data-theme='dark'] block above.
+   store.js resolves 'auto' against the media query and always writes the
+   attribute, so there is one source of truth and no specificity race. */
+
+/* ------------------------------------------------------------------ reset */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100svh;
+  background-color: var(--paper);
+  /* Ruled paper: one hairline per line-height, plus a soft vignette so the
+     sheet reads as a physical object rather than a flat fill. */
+  background-image: radial-gradient(125% 85% at 50% 0%, transparent 42%, var(--vignette) 100%),
+    repeating-linear-gradient(
+      to bottom,
+      rgba(120, 92, 40, var(--rule-alpha)) 0 1px,
+      transparent 1px var(--row)
+    );
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--t-body);
+  line-height: 1.5;
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+:focus-visible {
+  outline: 2.5px solid var(--brass);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+::selection {
+  background: var(--brass-soft);
+}
+
+/* ------------------------------------------------------------------ shell */
+
+.shell {
+  max-width: var(--shell);
+  margin-inline: auto;
+  padding-inline: max(var(--gutter), env(safe-area-inset-left));
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  padding-top: max(var(--s3), env(safe-area-inset-top));
+  /* Opaque as far as the brass rule, which is the bar's real edge, and only
+     then a few pixels of feather. Fading from 82% put the rule itself inside
+     the gradient, so a card count or a dealer's name scrolling underneath
+     showed through around it — the same muddle the dock used to make. */
+  background: linear-gradient(to bottom, var(--paper) 0 92%, transparent);
+}
+
+/* Three fixed slots, not a flex row of whatever happens to be there: the
+   leading control is always the same size and in the same place whether it is
+   the mark or the back arrow, so nothing jumps when a screen is stacked. */
+.topbar__inner {
+  display: grid;
+  grid-template-columns: var(--col-act) minmax(0, 1fr) var(--col-act);
+  align-items: center;
+  gap: var(--s3);
+  min-height: 3.25rem;
+  max-width: var(--shell);
+  margin-inline: auto;
+  padding-inline: max(var(--gutter), env(safe-area-inset-left));
+}
+
+/* The mark: a brass tile carrying the staircase, sized exactly like the back
+   arrow that replaces it. */
+.mark {
+  display: grid;
+  place-items: center;
+  width: var(--col-act);
+  height: var(--col-act);
+  border-radius: var(--radius);
+  background: linear-gradient(155deg, var(--brass), var(--brass-strong));
+  color: var(--on-brass);
+  box-shadow: var(--shadow-brass);
+}
+
+.mark svg {
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
+/* The wordmark and the screen title are two lines of one lockup, sharing a
+   left edge and stacked on their own leading. Setting them side by side is
+   what made the old bar look wrong. */
+.topbar__title {
+  display: grid;
+  gap: 0;
+  min-width: 0;
+}
+
+.wordmark {
+  font-family: var(--font-ui);
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: var(--brass-strong);
+  white-space: nowrap;
+}
+
+.wordmark em {
+  font-style: normal;
+}
+
+.topbar__game {
+  font-family: var(--font-display);
+  font-size: var(--t-lead);
+  font-weight: 700;
+  letter-spacing: -0.012em;
+  line-height: 1.25;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.iconbtn {
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  flex: 0 0 auto;
+  border-radius: var(--radius);
+  color: var(--ink-2);
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+}
+
+.iconbtn:hover {
+  background: var(--brass-soft);
+  color: var(--brass-strong);
+}
+
+.iconbtn svg {
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
+/* The brass hairline that separates the head from the table. */
+.rule {
+  height: 2px;
+  border: 0;
+  background: linear-gradient(to right, transparent, var(--brass-edge) 18%, var(--brass-edge) 82%, transparent);
+  opacity: 0.85;
+}
+
+/* Enough room for the sticky action dock to come to rest below the last row
+   rather than permanently covering it: the tallest dock, plus the height of
+   the tab bar it floats above. Short of this the page cannot scroll far
+   enough for the dock to unstick, and the last player's chips stay buried. */
+main {
+  padding-bottom: calc(10.5rem + env(safe-area-inset-bottom));
+}
+
+.view {
+  display: none;
+  animation: view-in var(--slow) var(--ease) both;
+}
+
+.view.is-active {
+  display: block;
+}
+
+@keyframes view-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.375rem);
+  }
+}
+
+/* ---------------------------------------------------------------- tab bar */
+
+.tabbar {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  padding: var(--s3) max(var(--s4), env(safe-area-inset-left)) calc(var(--s3) + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--paper) 55%, transparent);
+  pointer-events: none;
+}
+
+.tabbar__inner {
+  pointer-events: auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--s0);
+  width: min(var(--shell), 100%);
+  padding: var(--s1);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-2);
+}
+
+.tab {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: var(--s0);
+  min-height: var(--tap);
+  padding: var(--s1) var(--s0);
+  border-radius: var(--radius);
+  color: var(--ink-3);
+  font-size: var(--t-micro);
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  line-height: 1.1;
+  transition: color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+
+.tab span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tab svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.tab[data-selected='true'] {
+  color: var(--brass-strong);
+  background: var(--brass-soft);
+}
+
+.tab:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+/* -------------------------------------------------------------- headings */
+
+/* Section rhythm: --s6 of air above a heading, --s3 below it. Applied here
+   once rather than as a margin at every call site. */
+.h {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--t-lead);
+  letter-spacing: -0.005em;
+  line-height: 1.3;
+  margin: var(--s6) 0 var(--s3);
+  color: var(--ink);
+}
+
+.h:first-child {
+  margin-top: var(--s5);
+}
+
+.h--lg {
+  font-weight: 900;
+  font-size: var(--t-hero);
+  letter-spacing: -0.024em;
+  line-height: 1.1;
+  margin-bottom: var(--s3);
+}
+
+/* A heading with a rule running to the edge of the shell: it groups what
+   follows without needing a box around it. */
+.h--ruled {
+  display: grid;
+  grid-template-columns: auto minmax(var(--s6), 1fr);
+  align-items: center;
+  gap: var(--s4);
+}
+
+.h--ruled::after {
+  content: '';
+  height: 1px;
+  background: linear-gradient(to right, var(--line), transparent);
+}
+
+.hint {
+  font-size: var(--t-small);
+  line-height: 1.5;
+  color: var(--ink-3);
+  margin-bottom: var(--s3);
+}
+
+.hint:last-child {
+  margin-bottom: 0;
+}
+
+.hint--center {
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------- panels */
+
+.panel {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+}
+
+.panel + .panel {
+  margin-top: var(--s3);
+}
+
+.panel__pad {
+  padding: var(--s4);
+}
+
+.panel__pad--top0 {
+  padding-top: 0;
+}
+
+/* A panel's own caption strip: a sunken foot that carries a total or a note
+   without needing a paragraph of its own below the box. */
+.panel__foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s4);
+  padding: var(--s3) var(--s4);
+  border-top: 1px solid var(--line-2);
+  background: var(--brass-wash);
+  font-size: var(--t-small);
+  color: var(--ink-3);
+}
+
+/* -------------------------------------------------------------- the ledger
+
+   One column template, shared by the round entries, the standings and the
+   plan. `--rule-x` is where the ledger's margin rule falls: at the boundary
+   between the index column and everything else. Drawing it makes the grid
+   visible, and a visible grid is one you can trust at a glance in bad light. */
+
+.ledger {
+  --rule-x: calc(var(--pad-x) + var(--col-pip) + var(--s3) / 2);
+}
+
+.ledger::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--rule-x);
+  width: 1px;
+  background: var(--brass-edge);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* A two-storey list — a head, then a strip of chips under it — rules only its
+   heads. Run down the whole panel the hairline crossed every chip in the
+   round, which reads as a rendering fault rather than as a grid. */
+.ledger--heads::before {
+  content: none;
+}
+
+.ledger--heads .entry__head {
+  position: relative;
+}
+
+.ledger--heads .entry__head::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--rule-x);
+  width: 1px;
+  background: var(--brass-edge);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* The pip: player colour, seat or rank, and a tap-sized presence, in one
+   1.75rem token. The colour is a ring with a wash rather than a fill, so the
+   numeral inside keeps full ink contrast in both themes. */
+.pip {
+  display: grid;
+  place-items: center;
+  width: var(--col-pip);
+  height: var(--col-pip);
+  border-radius: var(--radius-full);
+  border: 2px solid var(--pip-color, var(--line-strong));
+  background: color-mix(in srgb, var(--pip-color, var(--line)) 16%, transparent);
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--t-micro);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+
+/* A plain colour dot, where there is no ordinal to carry. */
+.dot {
+  flex: 0 0 auto;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: var(--radius-full);
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.14);
+}
+
+/* A settings-style row: label on the left, control on the right. */
+.row {
+  display: flex;
+  align-items: center;
+  /* A wide control (a four-option segmented picker, say) drops onto its own
+     line rather than overflowing the panel and clipping its last options. */
+  flex-wrap: wrap;
+  gap: var(--s3) var(--s4);
+  min-height: var(--row);
+  padding: var(--s3) var(--s4);
+  border-bottom: 1px solid var(--line-2);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+/* Label above, control across the full width below. Used wherever the control
+   is wider than the space a right-hand column can honestly offer — a
+   four-option picker at 320px — so the wrap is designed rather than accidental. */
+.row--stack {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s3);
+}
+
+.row__label {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--t-body);
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.row__label small {
+  display: block;
+  font-size: var(--t-small);
+  font-weight: 400;
+  color: var(--ink-3);
+  line-height: 1.4;
+  margin-top: var(--s0);
+}
+
+.row__label small.is-indented {
+  margin-inline-start: 2.125rem;
+}
+
+.row__control {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+  max-width: 100%;
+}
+
+.row--stack .row__control {
+  margin-inline-start: 0;
+}
+
+.row__value {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: var(--t-lead);
+  color: var(--ink-2);
+}
+
+/* ---------------------------------------------------------------- buttons */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s3);
+  min-height: var(--tap);
+  padding: var(--s3) var(--s5);
+  border-radius: var(--radius);
+  font-size: var(--t-body);
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+  transition: transform var(--fast) var(--ease), background var(--fast) var(--ease), border-color var(--fast) var(--ease),
+    opacity var(--fast) var(--ease);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.995);
+}
+
+.btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.btn--block {
+  display: flex;
+  width: 100%;
+}
+
+/* The one action that advances the game. Deliberately loud. */
+.btn--primary {
+  background: linear-gradient(to bottom, var(--brass), var(--brass-strong));
+  color: var(--on-brass);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--t-lead);
+  letter-spacing: 0.005em;
+  min-height: 3.25rem;
+  box-shadow: var(--shadow-brass);
+  border: 1px solid var(--brass-strong);
+}
+
+.btn--primary:disabled {
+  box-shadow: none;
+}
+
+.btn--ghost {
+  border: 1.5px solid var(--line-strong);
+  color: var(--ink-2);
+  background: var(--panel);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  border-color: var(--brass);
+  color: var(--brass-strong);
+}
+
+.btn--quiet {
+  color: var(--ink-3);
+  padding-inline: var(--s4);
+}
+
+.btn--quiet:hover:not(:disabled) {
+  color: var(--brass-strong);
+}
+
+/* Mixed towards --line-strong rather than towards transparent: a destructive
+   control still has to draw a boundary at 3:1, and 45% of --bad over the panel
+   fell to 1.8:1 on the baize. */
+.btn--danger {
+  color: var(--bad);
+  border-color: color-mix(in srgb, var(--bad) 70%, var(--line-strong));
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: var(--bad-soft);
+  border-color: var(--bad);
+  color: var(--bad);
+}
+
+.btn--dashed {
+  width: 100%;
+  border: 1.75px dashed var(--brass-edge);
+  color: var(--brass-strong);
+  background: transparent;
+  font-weight: 700;
+}
+
+.btn--dashed:hover:not(:disabled) {
+  background: var(--brass-soft);
+}
+
+/* Compact variant for a button that sits inside a row rather than under one.
+   Still 44px of touchable height — it earns its size back in padding, never
+   in target area. */
+.btn--inrow {
+  min-height: var(--tap);
+  padding-inline: var(--s4);
+  font-size: var(--t-small);
+}
+
+.btn svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: 0 0 auto;
+}
+
+.btnrow {
+  display: flex;
+  gap: var(--s3);
+  margin-top: var(--s3);
+}
+
+.btnrow > .btn {
+  flex: 1;
+}
+
+.btnrow--spaced {
+  margin-top: var(--s6);
+}
+
+/* The sticky action dock that floats above the tab bar.
+
+   While it is stuck it sits over the list, so it carries the paper behind it
+   as an opaque band with a short fade at its leading edge: a button floating
+   on top of half-legible text reads as a rendering bug, and a long soft
+   gradient leaves a strip of ghosted chips that look tappable and are not.
+
+   The band runs all the way to the foot of the screen and passes behind the
+   tab bar, so there is no strip of half-veiled chips left between the two —
+   the gap between a dock resting at 4.75rem and a tab bar whose own fade
+   starts lower was showing exactly that. The height it costs is taken back
+   with an equal negative margin, so the flow below is unchanged and the page
+   still scrolls precisely far enough for the dock to come to rest. */
+.dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  display: grid;
+  gap: var(--s1);
+  margin-top: var(--s4);
+  padding: var(--s5) 0 calc(4.875rem + env(safe-area-inset-bottom));
+  margin-bottom: calc(-4.75rem - env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--paper) 0 92%, transparent);
+}
+
+/* Long forms put their call to action at the end rather than floating it over
+   the fields the user is still working through. */
+.dock--static {
+  position: static;
+  padding: var(--s4) 0 0;
+  margin-bottom: 0;
+  background: none;
+}
+
+/* A single trailing action at the foot of a scrolling screen. */
+.footaction {
+  margin-top: var(--s7);
+}
+
+/* One step of separation from whatever is above. */
+.spaced {
+  margin-top: var(--s5);
+}
+
+/* A button that takes only the width of its label, inside a row of buttons
+   that otherwise share the space equally. */
+.btnrow > .btn--hug {
+  flex: 0 0 auto;
+}
+
+/* ----------------------------------------------------------- form controls */
+
+/* Wide enough to type a name into, but it gives way before the label beside
+   it does — a control that pushes its own label off the row is not a row. */
+.field {
+  flex: 0 1 11rem;
+  width: 11rem;
+  min-width: 7rem;
+  max-width: 100%;
+}
+
+.input {
+  width: 100%;
+  min-height: var(--tap);
+  padding: var(--s3) var(--s4);
+  background: var(--sunk);
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--radius);
+  font-size: var(--t-body);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* A placeholder is still text somebody has to read, so it takes secondary ink
+   rather than the de-emphasised shade: on --sunk the latter fell to 4.3:1.
+   The weight, not the value, is what marks it as not-yet-filled. */
+.input::placeholder {
+  color: var(--ink-3);
+  font-weight: 400;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--brass);
+  background: var(--panel);
+}
+
+/* Numeric stepper. */
+.stepper {
+  display: inline-flex;
+  align-items: stretch;
+  background: var(--sunk);
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.stepper button {
+  width: var(--tap);
+  min-height: var(--tap);
+  display: grid;
+  place-items: center;
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--brass-strong);
+  transition: background var(--fast) var(--ease);
+}
+
+.stepper button:hover:not(:disabled) {
+  background: var(--brass-soft);
+}
+
+.stepper button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.stepper__value {
+  min-width: 2.75rem;
+  display: grid;
+  place-items: center;
+  padding-inline: var(--s1);
+  font-family: var(--font-display);
+  font-size: var(--t-lead);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+/* Segmented control. Options wrap onto a second line when they cannot all fit
+   across: on a narrow phone a four-option picker would otherwise run past the
+   edge of the panel, leaving the last two impossible to tap. */
+.seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  max-width: 100%;
+  padding: var(--s0);
+  gap: var(--s0);
+  background: var(--sunk);
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--radius);
+}
+
+.seg--block {
+  display: flex;
+  width: 100%;
+}
+
+/* A segment is a tap target like any other, so it keeps 44px in both
+   directions and wraps to the next line rather than shrinking below it. */
+.seg button {
+  flex: 1 1 auto;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  padding: var(--s1) var(--s3);
+  border-radius: calc(var(--radius) - 0.1875rem);
+  font-size: var(--t-small);
+  font-weight: 600;
+  color: var(--ink-3);
+  white-space: nowrap;
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+}
+
+.seg button[aria-pressed='true'] {
+  background: var(--brass);
+  color: var(--on-brass);
+  box-shadow: var(--shadow-1);
+}
+
+/* Checkbox rendered as a card-suit tick. */
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  min-height: var(--tap);
+  cursor: pointer;
+}
+
+.check.is-disabled {
+  opacity: 0.55;
+}
+
+.check input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.check__box {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--sunk);
+  color: transparent;
+  transition: all var(--fast) var(--ease);
+}
+
+.check__box svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.check input:checked + .check__box {
+  background: var(--brass);
+  border-color: var(--brass);
+  color: var(--on-brass);
+}
+
+.check input:focus-visible + .check__box {
+  outline: 2.5px solid var(--brass);
+  outline-offset: 2px;
+}
+
+.check__label {
+  font-size: var(--t-body);
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.35;
+}
+
+/* ------------------------------------------------------------ status bars */
+
+.status {
+  display: grid;
+  grid-template-columns: 1.125rem minmax(0, 1fr);
+  align-items: start;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  border-radius: var(--radius);
+  font-size: var(--t-small);
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: var(--s3);
+}
+
+.status__icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  /* Nudged onto the cap height of the first line rather than the top of its
+     box, so the glyph reads as sitting on the same line as the words. */
+  margin-top: 0.09rem;
+}
+
+.status b {
+  font-variant-numeric: tabular-nums;
+}
+
+.status--ok {
+  background: var(--good-soft);
+  color: var(--good);
+}
+
+.status--warn {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.status--bad {
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+
+.status--info {
+  background: var(--brass-soft);
+  color: var(--brass-strong);
+}
+
+/* A waiting release, offered on every screen rather than hidden in Settings. */
+.updatebar {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  margin: var(--s3) 0;
+  padding: var(--s3) var(--s4);
+  border-radius: var(--radius);
+  background: var(--brass-soft);
+  box-shadow: inset 0 0 0 1.5px var(--brass-edge);
+  color: var(--brass-strong);
+  font-size: var(--t-small);
+  font-weight: 600;
+}
+
+.updatebar svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: 0 0 auto;
+}
+
+.updatebar span {
+  flex: 1;
+  min-width: 0;
+}
+
+.updatebar button {
+  flex: 0 0 auto;
+  min-height: 2.25rem;
+  padding: var(--s1) var(--s4);
+  border-radius: var(--radius-full);
+  background: var(--brass);
+  color: var(--on-brass);
+  font-size: var(--t-small);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* The unlocked-editing warning strip. */
+.unlockbar {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  margin: var(--s3) 0;
+  padding: var(--s3) var(--s4);
+  border-radius: var(--radius);
+  font-size: var(--t-small);
+  font-weight: 700;
+  color: var(--on-brass);
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--brass) 0 var(--s4),
+    color-mix(in srgb, var(--brass) 82%, #000) var(--s4) var(--s6)
+  );
+  box-shadow: var(--shadow-1);
+}
+
+.unlockbar svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: 0 0 auto;
+}
+
+.unlockbar button {
+  margin-inline-start: auto;
+  padding: var(--s1) var(--s4);
+  min-height: 2rem;
+  border-radius: var(--radius-full);
+  background: var(--on-brass);
+  color: var(--brass-strong);
+  font-size: var(--t-small);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* -------------------------------------------------------------- round head
+
+   One panel carrying everything true about the round: how many cards, which
+   round of how many, who deals and who opens, the whole staircase with this
+   step marked, and which of the two phases you are in. */
+
+.roundhead {
+  display: grid;
+  margin-bottom: var(--s3);
+}
+
+.roundhead__top {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) var(--col-act);
+  align-items: center;
+  gap: var(--s4);
+  padding: var(--s4) var(--s4) var(--s4) var(--s4);
+}
+
+.roundhead__text {
+  min-width: 0;
+}
+
+.roundhead__title {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--t-title);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+}
+
+.roundhead__title em {
+  font-style: normal;
+  color: var(--brass-strong);
+}
+
+.roundhead__sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s0) var(--s3);
+  margin-top: var(--s1);
+  font-size: var(--t-small);
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.roundhead__sub b {
+  color: var(--ink-2);
+  font-weight: 700;
+}
+
+.roundhead__sub svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--brass);
+  vertical-align: -0.1em;
+}
+
+/* The card count, drawn as the top of a squared-off deck. */
+.cardcount {
+  position: relative;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0;
+  width: 3.25rem;
+  height: 4rem;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(158deg, var(--brass), var(--brass-strong));
+  color: var(--on-brass);
+  box-shadow: var(--shadow-brass);
+}
+
+.cardcount::before,
+.cardcount::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+  z-index: -1;
+}
+
+.cardcount::before {
+  transform: rotate(-5deg) translateX(-0.1rem);
+  opacity: 0.4;
+}
+
+.cardcount::after {
+  transform: rotate(3.5deg) translateX(0.1rem);
+  opacity: 0.24;
+}
+
+.cardcount__n {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--t-mega);
+  line-height: 0.95;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Full strength, not 86%: nine-pixel letterspaced caps on brass have no
+   contrast to spare, and the number below it already carries the hierarchy. */
+.cardcount__label {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1.4;
+}
+
+/* ---------------------------------------------------------- phase stepper */
+
+.phases {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  border-top: 1px solid var(--line-2);
+  background: var(--line-2);
+}
+
+/* Full tap height on both pills, always: step 1 becomes the way back to the
+   bids once they are locked, and a control that changes size between phases
+   moves the thing underneath it out from under your thumb. */
+.phase {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  width: 100%;
+  min-height: var(--tap);
+  padding: var(--s1) var(--s3);
+  background: var(--panel);
+  color: var(--ink-3);
+  font-size: var(--t-small);
+  font-weight: 700;
+  transition: all var(--fast) var(--ease);
+}
+
+button.phase.is-complete:hover {
+  background: var(--brass-soft);
+  color: var(--brass-strong);
+}
+
+.phase__num {
+  display: grid;
+  place-items: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: 0 0 auto;
+  border-radius: var(--radius-full);
+  background: var(--sunk);
+  color: var(--ink-3);
+  font-size: 0.625rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* An opaque tint rather than --brass-soft laid on as it is: the pill sits on
+   the hairline that divides the two steps, not on the panel, and 13% of brass
+   over that darker line left the label at 4.4:1. */
+.phase[aria-current='step'] {
+  background: color-mix(in srgb, var(--brass) 13%, var(--panel));
+  color: var(--brass-strong);
+  box-shadow: inset 0 -2.5px 0 var(--brass);
+}
+
+.phase[aria-current='step'] .phase__num {
+  background: var(--brass);
+  color: var(--on-brass);
+}
+
+.phase.is-complete {
+  color: var(--good);
+}
+
+.phase.is-complete .phase__num {
+  background: var(--good);
+  color: var(--panel);
+}
+
+.phase svg {
+  width: 0.6875rem;
+  height: 0.6875rem;
+}
+
+/* --------------------------------------------------------- player entries
+
+   Five players used to be five floating cards with a wrapping header apiece,
+   which put the name, the badge and the running score in a different place on
+   every one of them. They are now rows of one ledger: a fixed pip, a name that
+   truncates, badges that shrink, and a running score in a column whose right
+   edge is identical on every row. */
+
+.entry {
+  border-bottom: 1px solid var(--line-2);
+  transition: background var(--fast) var(--ease);
+  /* When the shell scrolls the player whose turn it is into view, keep them
+     clear of the dock below and the sticky top bar above. */
+  scroll-margin-bottom: 11rem;
+  scroll-margin-top: 4.5rem;
+}
+
+.entry:last-child {
+  border-bottom: none;
+}
+
+/* The player whose turn it is to be entered. */
+.entry.is-focus {
+  background: var(--brass-wash);
+  box-shadow: inset 3px 0 0 var(--brass);
+}
+
+.entry.is-out {
+  opacity: 0.6;
+}
+
+.entry__head {
+  display: grid;
+  grid-template-columns: var(--col-pip) minmax(2.5rem, 1fr) auto var(--col-score) var(--col-act);
+  align-items: center;
+  gap: 0 var(--s3);
+  min-height: var(--row);
+  padding-inline: var(--pad-x);
+}
+
+.entry__name {
+  font-size: var(--t-lead);
+  font-weight: 700;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Badges shrink out of the way before the name does: whose bid you are
+   entering matters more than a repeat of who deals. */
+.entry__marks {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Running score, and this round's swing beneath it. Right-aligned in a fixed
+   column, so the units of every player's score sit in one straight line. */
+.entry__score {
+  display: grid;
+  justify-items: end;
+  gap: 0;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.entry__score b {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--t-lead);
+  color: var(--ink-2);
+}
+
+.entry__score i {
+  font-style: normal;
+  font-size: var(--t-micro);
+  font-weight: 700;
+}
+
+.entry__delta--pos {
+  color: var(--good);
+}
+
+.entry__delta--neg {
+  color: var(--bad);
+}
+
+.entry__delta--zero {
+  color: var(--ink-4);
+}
+
+.entry__body {
+  padding: 0 var(--pad-x) var(--s3);
+}
+
+/* The row a player who is sitting this one out gets instead of chips. */
+.entry__out {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding-bottom: var(--s1);
+  font-size: var(--t-small);
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+/* Role badges: who deals, who opens. The word is dropped on a narrow phone —
+   at 320px in German it was the thing pushing the player's name to nothing. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s1);
+  flex: 0 0 auto;
+  height: 1.5rem;
+  padding-inline: var(--s2);
+  border-radius: var(--radius-full);
+  font-size: var(--t-micro);
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badge svg {
+  width: 0.8125rem;
+  height: 0.8125rem;
+  flex: 0 0 auto;
+}
+
+.badge--dealer {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.badge--lead {
+  background: var(--brass-soft);
+  color: var(--brass-strong);
+  box-shadow: inset 0 0 0 1.5px var(--brass-edge);
+}
+
+.badge--out {
+  background: var(--sunk);
+  color: var(--ink-3);
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+}
+
+/* The bid a player is now trying to make, shown while the tricks go in. */
+.badge--bid {
+  background: var(--sunk);
+  color: var(--ink-2);
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Only a badge that carries a glyph may drop its word: the glyph still says
+   "deals" or "opens". A badge whose whole content is a number — the bid, an
+   adjustment — has nothing to fall back on and always keeps its text. */
+@media (max-width: 23.75rem) {
+  .entry__marks .badge svg + span {
+    display: none;
+  }
+
+  .entry__marks .badge:has(svg) {
+    padding-inline: var(--s1);
+  }
+}
+
+/* -------------------------------------------------------------- number chips */
+
+/* The primary input of the whole app: tap a number to lay it down. */
+/* A grid rather than wrapping flex: every chip keeps the same width, so a
+   short final row does not stretch three buttons across the row. */
+.chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(2.75rem, 1fr));
+  gap: var(--s1);
+}
+
+.chip {
+  min-width: 0;
+  min-height: var(--tap);
+  padding: var(--s1) var(--s2);
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--line-strong);
+  background: var(--sunk);
+  color: var(--ink-2);
+  font-family: var(--font-display);
+  font-size: var(--t-lead);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  transition: transform var(--fast) var(--ease), background var(--fast) var(--ease), color var(--fast) var(--ease),
+    border-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
+}
+
+.chip:hover:not(:disabled):not([aria-pressed='true']) {
+  border-color: var(--brass);
+  color: var(--brass-strong);
+}
+
+/* The number this player called. Marking it on the trick row means the bid
+   never needs a label of its own, and you can see at a glance whether the
+   trick about to be tapped makes it. */
+.chip.is-bid:not([aria-pressed='true']) {
+  border-style: dashed;
+  border-color: var(--brass);
+  color: var(--brass-strong);
+  background: var(--brass-wash);
+}
+
+.chip[aria-pressed='true'] {
+  background: linear-gradient(to bottom, var(--brass), var(--brass-strong));
+  border-color: var(--brass-strong);
+  color: var(--on-brass);
+  box-shadow: var(--shadow-brass);
+  animation: chip-lay var(--fast) var(--ease);
+}
+
+@keyframes chip-lay {
+  from {
+    transform: scale(0.9);
+  }
+  60% {
+    transform: scale(1.06);
+  }
+}
+
+/* The bid the dealer is barred from making. */
+.chip.is-forbidden {
+  color: var(--bad);
+  border-color: color-mix(in srgb, var(--bad) 70%, var(--line-strong));
+  background: var(--bad-soft);
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.chip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Points, coloured by sign — used in the scoring preview on setup. */
+.pts {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--t-title);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.pts--pos {
+  color: var(--good);
+}
+.pts--neg {
+  color: var(--bad);
+}
+.pts--zero {
+  color: var(--ink-3);
+}
+
+.preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: var(--s3) 0;
+  border-top: 1px dashed var(--line);
+  font-size: var(--t-small);
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.preview:first-child {
+  border-top: none;
+}
+
+/* ------------------------------------------------------------- standings */
+
+/* The two fixed numeric columns are what make this a table rather than five
+   right-aligned lines: the header strip above uses the identical template, so
+   a column label sits over the column it names. Everything variable — the
+   name, the crown, a withdrawn badge — lives in the one flexible cell. */
+.board__row {
+  display: grid;
+  grid-template-columns: var(--col-pip) minmax(0, 1fr) var(--col-made) var(--col-score);
+  align-items: center;
+  gap: 0 var(--s3);
+  min-height: var(--row);
+  padding: var(--s1) var(--pad-x);
+  border-bottom: 1px solid var(--line-2);
+}
+
+.board__row:last-child {
+  border-bottom: none;
+}
+
+/* Managing seats swaps the two numeric columns for a grip and an edit button:
+   in manage mode the list is the seating order, not the score. */
+.board__row.is-manage {
+  grid-template-columns: var(--col-grip) var(--col-pip) minmax(0, 1fr) auto;
+}
+
+.board__row.is-leader .pip {
+  border-color: var(--brass);
+  background: var(--brass-soft);
+  color: var(--brass-strong);
+}
+
+.board__who {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.board__name {
+  min-width: 0;
+  font-size: var(--t-lead);
+  font-weight: 700;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board__row.is-leader .board__name {
+  color: var(--brass-strong);
+}
+
+/* Rounds this player called correctly, out of the rounds they played. Quiet
+   enough not to compete with the score, present enough to settle an argument. */
+.board__made {
+  justify-self: end;
+  font-size: var(--t-small);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.board__score {
+  justify-self: end;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--t-title);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.board__crown {
+  width: 1rem;
+  height: 1rem;
+  color: var(--brass);
+  flex: 0 0 auto;
+}
+
+/* A header strip naming the columns of the list below it. */
+.colhead {
+  display: grid;
+  align-items: center;
+  gap: 0 var(--s3);
+  padding: var(--s1) var(--pad-x);
+  border-bottom: 1px solid var(--line);
+  background: var(--brass-wash);
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  line-height: 1.6;
+}
+
+.colhead--board {
+  grid-template-columns: var(--col-pip) minmax(0, 1fr) var(--col-made) var(--col-score);
+}
+
+.colhead span:nth-child(3),
+.colhead span:last-child {
+  text-align: end;
+}
+
+.colhead span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------- the scoresheet
+
+   Round by round, as an actual score pad: rounds down the side, players
+   across the top, and every cell in the same place on every line. The old
+   version wrapped `Name 0/0 +5` chips into a paragraph, which was both denser
+   to read and impossible to scan down a column. */
+
+/* Six players do not fit a 320px pad, so it scrolls sideways under a sticky
+   round column. The fade on the trailing edge is the only honest way to say
+   there is more to the right without spending a row on a scrollbar — but it
+   is only honest when there *is* more: applied unconditionally it dimmed a
+   third of the last player's column on every screen the pad already fits.
+   The shell tags the ones that actually overflow. */
+.sheetgrid {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+.sheetgrid.is-scrollable {
+  mask-image: linear-gradient(to right, #000 0 calc(100% - 1.5rem), transparent);
+}
+
+.sheetgrid__inner {
+  display: grid;
+  grid-template-columns: var(--sheet-cols, 3.25rem repeat(4, minmax(3.25rem, 1fr)));
+  min-width: 100%;
+  width: max-content;
+}
+
+.sheetgrid__head,
+.sheetgrid__row {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  align-items: stretch;
+}
+
+.sheetgrid__head {
+  border-bottom: 1px solid var(--line);
+  background: var(--brass-wash);
+}
+
+.sheetgrid__player {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: var(--s0);
+  min-width: 0;
+  padding: var(--s2) var(--s1);
+  font-size: var(--t-micro);
+  font-weight: 700;
+  color: var(--ink-2);
+  border-inline-start: 1px solid var(--line-2);
+}
+
+.sheetgrid__player span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheetgrid__corner {
+  padding: var(--s2) var(--s1);
+  font-size: 0.625rem;
+  font-weight: 800;
+  /* French "Manche" is the longest word that lands here and overran the cell
+     by 2px at the wider tracking. */
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  display: grid;
+  align-content: center;
+}
+
+.sheetgrid__row {
+  border-bottom: 1px solid var(--line-2);
+}
+
+.sheetgrid__row:last-child {
+  border-bottom: none;
+}
+
+/* The round label doubles as the button that reopens the round, so it is a
+   full-height 44px target rather than a pencil hidden at the far end. It also
+   stays put while the players scroll past it, so you never lose track of
+   which line you are reading. */
+.hist {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 0;
+  min-height: var(--row);
+  padding: var(--s1) var(--s2);
+  background: var(--panel);
+  border-inline-end: 1px solid var(--line);
+  text-align: start;
+  color: inherit;
+  transition: background var(--fast) var(--ease);
+}
+
+.sheetgrid__corner {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--panel-2);
+  border-inline-end: 1px solid var(--line);
+}
+
+.hist:hover {
+  background: var(--brass-soft);
+}
+
+.hist__n {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--t-small);
+  color: var(--brass-strong);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+
+.hist__cards {
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.sheetgrid__cell {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 0;
+  padding: var(--s1) var(--s0);
+  border-inline-start: 1px solid var(--line-2);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.sheetgrid__call {
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.sheetgrid__pts {
+  font-size: var(--t-small);
+  font-weight: 800;
+}
+
+.sheetgrid__pts--pos {
+  color: var(--good);
+}
+
+.sheetgrid__pts--neg {
+  color: var(--bad);
+}
+
+.sheetgrid__pts--zero {
+  color: var(--ink-3);
+}
+
+/* A made bid, marked quietly. At full strength this washed most of the pad
+   green on an ordinary evening and stopped meaning anything. */
+.sheetgrid__cell.is-made {
+  background: color-mix(in srgb, var(--good) 7%, transparent);
+}
+
+.sheetgrid__cell.is-out {
+  color: var(--ink-4);
+}
+
+/* ------------------------------------------------------------- staircase
+
+   The namesake, and the one drawing in the app. Every round is a step: the
+   treads meet, so the outline is a genuine flight of stairs rather than a bar
+   chart, and the whole game fits the width instead of scrolling away past the
+   sixth round. The numbers sit below the floor on one shared baseline — they
+   used to float at the top of each bar, which is what made the strip look
+   ragged. */
+
+.stairs {
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  align-items: end;
+  padding: var(--s4) var(--s4) var(--s3);
+}
+
+.stairs__step {
+  position: relative;
+  display: grid;
+  grid-template-rows: 3.5rem 1rem;
+  align-items: end;
+  min-width: 0;
+}
+
+.stairs__bar {
+  height: var(--h, 20%);
+  min-height: 0.375rem;
+  align-self: end;
+  background: var(--sunk);
+  border-top: 2px solid var(--line-strong);
+  border-inline-end: 1px solid var(--line);
+  border-bottom: 2px solid var(--line-strong);
+}
+
+.stairs__step:last-child .stairs__bar {
+  border-inline-end: none;
+}
+
+.stairs__step.is-done .stairs__bar {
+  background: linear-gradient(to top, var(--brass-strong), var(--brass));
+  border-top-color: var(--brass-strong);
+  border-inline-end-color: color-mix(in srgb, var(--on-brass) 25%, transparent);
+}
+
+.stairs__step.is-current .stairs__bar {
+  background: var(--panel);
+  border-top: 3px solid var(--brass);
+  border-inline-end-color: var(--brass-edge);
+  box-shadow: inset 0 0 0 1px var(--brass-edge), var(--shadow-brass);
+}
+
+.stairs__step.is-skipped .stairs__bar {
+  background: repeating-linear-gradient(-45deg, var(--line-2) 0 var(--s1), transparent var(--s1) var(--s3));
+  border-top-style: dashed;
+}
+
+/* A wash and a caret so the step in play is findable in a staircase of
+   twenty-four rounds without counting along the row. */
+.stairs__step.is-current {
+  background: linear-gradient(to bottom, var(--brass-soft), transparent 78%);
+}
+
+.stairs__step.is-current::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 0.3125rem solid transparent;
+  border-top: 0.375rem solid var(--brass);
+}
+
+.stairs__n {
+  align-self: center;
+  text-align: center;
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1rem;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+}
+
+.stairs__step.is-current .stairs__n {
+  color: var(--brass-strong);
+  font-weight: 800;
+}
+
+/* Past about twenty steps the labels stop being legible and start being
+   noise; the silhouette carries the shape on its own. */
+.stairs--dense .stairs__step {
+  grid-template-rows: 3.5rem 0;
+}
+
+.stairs--dense .stairs__n {
+  display: none;
+}
+
+/* The same drawing, half the height, at the top of the round in play. */
+.stairs--mini {
+  padding: var(--s3) var(--s4) var(--s3);
+}
+
+.stairs--mini .stairs__step {
+  grid-template-rows: 2rem 0;
+}
+
+.stairs--mini .stairs__n {
+  display: none;
+}
+
+/* One editable round in the list below the staircase. */
+.plan {
+  display: grid;
+  grid-template-columns: var(--col-pip) 2.25rem minmax(0, 1fr) auto 1rem;
+  align-items: center;
+  gap: 0 var(--s3);
+  width: 100%;
+  min-height: var(--row);
+  padding: var(--s1) var(--pad-x);
+  border-bottom: 1px solid var(--line-2);
+  text-align: start;
+  color: inherit;
+  transition: background var(--fast) var(--ease);
+}
+
+.plan:last-child {
+  border-bottom: none;
+}
+
+.plan:hover {
+  background: var(--brass-soft);
+}
+
+.plan.is-current {
+  background: var(--brass-wash);
+  box-shadow: inset 3px 0 0 var(--brass);
+}
+
+/* Dimmed, but not below reading: the strike-through and the hatched step are
+   what say "skipped", so the card count only needs to step back — at 0.55 it
+   fell to 3.6:1 on its own sunken tile. */
+.plan.is-skipped .plan__cards,
+.plan.is-skipped .plan__meta {
+  opacity: 0.7;
+  text-decoration: line-through;
+}
+
+.plan__idx {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--t-micro);
+  color: var(--ink-4);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.plan__cards {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-sm);
+  background: var(--sunk);
+  border: 1.5px solid var(--line-strong);
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--t-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.plan.is-done .plan__cards {
+  background: linear-gradient(to bottom, var(--brass), var(--brass-strong));
+  border-color: var(--brass-strong);
+  color: var(--on-brass);
+}
+
+.plan.is-current .plan__cards {
+  border-color: var(--brass);
+  border-width: 2px;
+  color: var(--brass-strong);
+}
+
+.plan__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--s1) var(--s3);
+  min-width: 0;
+  font-size: var(--t-small);
+  color: var(--ink-3);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.plan__who {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s1);
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* The dealer is the one fact a row of the plan has to deliver whole. The
+   opener sits immediately after them and is derivable from the deal, so when
+   the row runs out of width it is the one that gives way. */
+.plan__who + .plan__who {
+  flex-shrink: 5;
+  /* …but not to nothing: a stub of four characters still names somebody, a
+     single initial does not. */
+  min-width: 3.75rem;
+}
+
+/* On a narrow phone the two names cannot share a line without one of them
+   losing characters — in Portuguese the dealer was giving up 24px of its own
+   name to hold the opener's floor. Wrapping costs one line and truncates
+   neither, which is the better trade for a row whose whole job is to say who
+   deals and who opens. */
+@media (max-width: 23.75rem) {
+  .plan__meta {
+    flex-wrap: wrap;
+  }
+
+  .plan__who,
+  .plan__who + .plan__who {
+    flex: 0 0 100%;
+    min-width: 0;
+  }
+}
+
+.plan__who svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex: 0 0 auto;
+  color: var(--ink-4);
+}
+
+.plan__who b {
+  font-weight: 700;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.plan__status {
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-4);
+  white-space: nowrap;
+}
+
+.plan.is-current .plan__status {
+  color: var(--brass-strong);
+}
+
+.plan.is-done .plan__status {
+  color: var(--good);
+}
+
+.plan__go {
+  width: 1rem;
+  height: 1rem;
+  color: var(--ink-4);
+}
+
+/* A legend teaching the two glyphs used all over the plan and the badges. */
+.legendline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1) var(--s4);
+  font-size: var(--t-micro);
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.legendline span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s1);
+}
+
+.legendline svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--brass);
+}
+
+/* ------------------------------------------------------------ game cards */
+
+/* `minmax(0, 1fr)`, not the implicit `auto`: an auto track is floored by its
+   contents' minimum width, and the meta line's nowrap pill was quietly holding
+   the whole card 65px wider than the panel at 320px — which pushed the date
+   and half the Delete button out under `overflow: hidden`. */
+.gamecard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s3);
+  padding: var(--s4);
+  border-bottom: 1px solid var(--line-2);
+}
+
+.gamecard:last-child {
+  border-bottom: none;
+}
+
+.gamecard__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--s3);
+}
+
+.gamecard__name {
+  min-width: 0;
+  font-family: var(--font-display);
+  font-size: var(--t-lead);
+  font-weight: 700;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gamecard__when {
+  font-size: var(--t-micro);
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.gamecard__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s1) var(--s3);
+  font-size: var(--t-small);
+  color: var(--ink-3);
+  line-height: 1.4;
+}
+
+.gamecard__players {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1 1 8rem;
+}
+
+.gamecard .btnrow {
+  margin-top: 0;
+}
+
+.pill {
+  display: inline-block;
+  padding: 0 var(--s3);
+  border-radius: var(--radius-full);
+  font-size: var(--t-micro);
+  font-weight: 700;
+  line-height: 1.45;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.pill--live {
+  background: var(--brass-soft);
+  color: var(--brass-strong);
+}
+
+.pill--done {
+  background: var(--good-soft);
+  color: var(--good);
+}
+
+/* ------------------------------------------------------------------ chart */
+
+.chartbox {
+  padding: var(--s4) var(--s3) var(--s1);
+}
+
+.chartbox svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* A grid, so every value sits in a column rather than wherever the name
+   before it happened to end. */
+.legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+  gap: 0;
+  border-top: 1px solid var(--line-2);
+}
+
+.legend__item {
+  display: grid;
+  grid-template-columns: 0.75rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s2) var(--s4);
+  font-size: var(--t-small);
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.legend__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legend__swatch {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: var(--radius-sm);
+}
+
+.legend__value {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------ empty state */
+
+.empty {
+  padding: var(--s7) var(--s4);
+  text-align: center;
+  color: var(--ink-3);
+  font-size: var(--t-body);
+  line-height: 1.6;
+}
+
+.empty__pip {
+  font-size: 1.75rem;
+  color: var(--line);
+  margin-bottom: var(--s3);
+  letter-spacing: 0.25rem;
+}
+
+/* ----------------------------------------------------------------- sheet */
+
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  max-width: none;
+  max-height: none;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.sheet::backdrop {
+  background: rgba(20, 14, 4, 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.sheet__panel {
+  width: min(var(--shell), 100%);
+  max-height: min(86svh, 46rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-bottom: none;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow-2);
+  padding: var(--s3) var(--s4) calc(var(--s6) + env(safe-area-inset-bottom));
+  animation: sheet-up var(--slow) var(--ease);
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(12%);
+    opacity: 0;
+  }
+}
+
+/* On a pointer-driven screen the sheet stops being a sheet. Sliding a panel up
+   from the bottom edge is a thumb-reach idiom; on a tall desktop window it
+   just puts the answer as far as possible from the button that was clicked. */
+@media (min-width: 40rem) {
+  .sheet {
+    align-items: center;
+    padding: var(--s6);
+  }
+
+  .sheet__panel {
+    width: min(30rem, 100%);
+    max-height: min(80svh, 42rem);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: var(--s6);
+    animation: sheet-in var(--slow) var(--ease);
+  }
+
+  /* The drag grip is a touch affordance and means nothing with a mouse. */
+  .sheet__grip {
+    display: none;
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+.sheet__grip {
+  width: 2.5rem;
+  height: 0.25rem;
+  margin: var(--s2) auto var(--s3);
+  border-radius: var(--radius-full);
+  background: var(--line-strong);
+  opacity: 0.6;
+}
+
+.sheet__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--t-title);
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+  margin-bottom: var(--s1);
+}
+
+.sheet__actions {
+  display: grid;
+  gap: var(--s0);
+  margin-top: var(--s4);
+}
+
+.sheet__action {
+  display: grid;
+  grid-template-columns: 1.25rem minmax(0, 1fr);
+  align-items: center;
+  gap: var(--s4);
+  width: 100%;
+  min-height: var(--tap);
+  padding: var(--s3) var(--s4);
+  border-radius: var(--radius);
+  text-align: start;
+  font-size: var(--t-body);
+  font-weight: 600;
+  color: var(--ink);
+  transition: background var(--fast) var(--ease);
+}
+
+.sheet__action:hover {
+  background: var(--brass-soft);
+}
+
+.sheet__action svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: 0 0 auto;
+  color: var(--ink-3);
+}
+
+.sheet__action.is-danger {
+  color: var(--bad);
+}
+
+.sheet__action.is-danger svg {
+  color: var(--bad);
+}
+
+.sheet__action:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Picker list used for choosing a player (dealer, opener) and a language. */
+.picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+.picker button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  min-height: var(--tap);
+  padding: var(--s2) var(--s4);
+  border-radius: var(--radius);
+  border: 1.5px solid var(--line-strong);
+  background: var(--sunk);
+  font-size: var(--t-body);
+  font-weight: 600;
+  color: var(--ink-2);
+  transition: all var(--fast) var(--ease);
+}
+
+.picker button[aria-pressed='true'] {
+  border-color: var(--brass);
+  background: var(--brass-soft);
+  color: var(--brass-strong);
+}
+
+.picker__label {
+  font-size: var(--t-small);
+  font-weight: 700;
+  color: var(--ink-2);
+  margin-bottom: var(--s2);
+}
+
+.picker__label + .picker {
+  margin-bottom: var(--s4);
+}
+
+/* ----------------------------------------------------------------- toast */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  z-index: 70;
+  transform: translate(-50%, 1rem);
+  max-width: min(30rem, calc(100vw - 2rem));
+  padding: var(--s3) var(--s5);
+  border-radius: var(--radius-full);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: var(--t-small);
+  font-weight: 600;
+  text-align: center;
+  box-shadow: var(--shadow-2);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--slow) var(--ease), transform var(--slow) var(--ease);
+}
+
+.toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* --------------------------------------------------------- player rows */
+
+/* Five controls on one 320px line is the tightest row in the app: a grip to
+   drag by, a pip, a name to type into, the deal and a remove. Every one of the
+   three buttons is a full 44px square and the grip is a 44px-tall strip, so the
+   gaps close up rather than the targets shrinking — the name field keeps
+   whatever is left, and it is still wide enough to read a name in. */
+.seat {
+  display: grid;
+  grid-template-columns: var(--col-grip) var(--col-pip) minmax(0, 1fr) var(--tap) var(--tap);
+  align-items: center;
+  gap: 0 var(--s0);
+  min-height: var(--row);
+  padding: var(--s1) var(--pad-x);
+  border-bottom: 1px solid var(--line-2);
+}
+
+@media (min-width: 26rem) {
+  .seat {
+    gap: 0 var(--s2);
+  }
+}
+
+.seat:last-child {
+  border-bottom: none;
+}
+
+.seat__input {
+  min-width: 0;
+  min-height: var(--tap);
+  padding: var(--s1) var(--s3);
+  background: transparent;
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: var(--t-lead);
+  font-weight: 600;
+}
+
+.seat__input:focus {
+  outline: none;
+  border-color: var(--brass);
+  background: var(--sunk);
+}
+
+.seat__input::placeholder {
+  color: var(--ink-3);
+  font-weight: 400;
+}
+
+/* Column captions over the seat list. It repeats the seat row's own column
+   template, so a caption sits over the column it names rather than merely
+   near it. */
+.seathead {
+  display: grid;
+  grid-template-columns: var(--col-grip) var(--col-pip) minmax(0, 1fr) var(--tap) var(--tap);
+  align-items: center;
+  gap: 0 var(--s0);
+  padding-inline: var(--pad-x);
+  padding-block: var(--s2) var(--s1);
+  font-size: var(--t-micro);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  border-bottom: 1px solid var(--line);
+}
+
+/* Sits in the grid cell above the pick button, so it names that column and no
+   other. The label can be wider than the 46px button; letting it spill both
+   ways keeps it centred on what it points at. */
+.seat__collabel {
+  min-width: 0;
+  text-align: center;
+  overflow: visible;
+  white-space: nowrap;
+}
+
+/* Dealer radio drawn as a card back. */
+.dealerpick {
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: var(--radius-sm);
+  border: 1.75px solid var(--line-strong);
+  background: var(--sunk);
+  color: var(--ink-4);
+  transition: all var(--fast) var(--ease);
+}
+
+.dealerpick svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.dealerpick[aria-pressed='true'] {
+  border-color: var(--brass-strong);
+  background: linear-gradient(160deg, var(--brass), var(--brass-strong));
+  color: var(--on-brass);
+  box-shadow: var(--shadow-brass);
+}
+
+/* Drag handle. The glyph is narrow, but the button around it fills the row's
+   full height, so the target stays a comfortable strip rather than a 12px dot.
+   `touch-action: none` is what makes the drag possible at all on a phone:
+   without it the browser claims the vertical gesture as a page scroll. */
+.seat__grip {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: var(--tap);
+  border-radius: var(--radius-sm);
+  color: var(--ink-3);
+  cursor: grab;
+  touch-action: none;
+  transition: color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+
+.seat__grip:hover {
+  color: var(--ink-2);
+  background: var(--sunk);
+}
+
+.seat__grip:active {
+  cursor: grabbing;
+}
+
+.seat__grip svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/* While a drag is running: the row leaves the page and follows the finger,
+   and its neighbours slide out of the way. The transition is on the others
+   only — the dragged row must track the pointer with no lag at all. */
+.is-sorting {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.is-sorting > [data-sort-index] {
+  transition: transform 160ms var(--ease);
+}
+
+.is-sorting > .is-dragging {
+  position: relative;
+  z-index: 2;
+  transition: none;
+  /* Opaque, or the rows it passes over show through it. */
+  background: var(--panel);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-2);
+  border-bottom-color: transparent;
+}
+
+.is-sorting > .is-dragging .seat__grip {
+  color: var(--brass-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-sorting > [data-sort-index] {
+    transition: none;
+  }
+}
+
+.seat__remove {
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: var(--radius-sm);
+  color: var(--bad);
+}
+
+.seat__remove svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/* --------------------------------------------------------------- utility */
+
+.stack {
+  display: grid;
+  gap: var(--s3);
+}
+
+/* A caption and its one control, sitting under the panel they belong to. */
+.subrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  margin-top: var(--s3);
+}
+
+.subrow .hint {
+  margin-bottom: 0;
+}
+
+.center {
+  text-align: center;
+}
+
+.muted {
+  color: var(--ink-3);
+}
+
+.danger {
+  color: var(--bad);
+}
+
+.mono {
+  font-variant-numeric: tabular-nums;
+}
+
+.wrapword {
+  overflow-wrap: anywhere;
+}
+
+.urlbox {
+  font-size: var(--t-small);
+  line-height: 1.5;
+  color: var(--ink-3);
+}
+
+.linkish {
+  color: var(--brass-strong);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.linkish--icon {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s3);
+  min-height: var(--tap);
+  text-decoration: none;
+}
+
+.linkish--icon span {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.linkish--icon svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: 0 0 auto;
+}
+
+/* ------------------------------------------------------ staggered reveal */
+
+.stagger > * {
+  animation: rise var(--slow) var(--ease) both;
+}
+
+.stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.stagger > *:nth-child(2) {
+  animation-delay: 30ms;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 60ms;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 90ms;
+}
+.stagger > *:nth-child(5) {
+  animation-delay: 120ms;
+}
+.stagger > *:nth-child(6) {
+  animation-delay: 150ms;
+}
+.stagger > *:nth-child(n + 7) {
+  animation-delay: 180ms;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.375rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ------------------------------------------------------------ wider screens */
+
+@media (min-width: 26rem) {
+  :root {
+    --pad-x: 0.875rem;
+    --col-score: 3.75rem;
+  }
+
+  .chips {
+    grid-template-columns: repeat(auto-fit, minmax(3rem, 1fr));
+  }
+}
+
+@media (min-width: 34rem) {
+  :root {
+    --t-hero: 2rem;
+    --col-pip: 2rem;
+  }
+
+  .stairs__step {
+    grid-template-rows: 4.5rem 1rem;
+  }
+
+  .stairs--mini .stairs__step {
+    grid-template-rows: 2.5rem 0;
+  }
+}

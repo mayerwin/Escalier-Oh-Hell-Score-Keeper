@@ -1,0 +1,7 @@
+# Normalise to LF everywhere so the CI check that regenerates the icons and
+# compares them against the committed files is not defeated by line endings.
+* text=auto eol=lf
+
+*.png binary
+*.woff2 binary
+*.ico binary

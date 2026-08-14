@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      # The app itself has no runtime dependencies; these are the test tools.
+      - run: npm ci
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Verify icons are reproducible from source
+        run: |
+          node tools/gen-icons.mjs
+          if [ -n "$(git status --porcelain assets/icons)" ]; then
+            echo "::error::assets/icons is out of date; run 'npm run icons' and commit the result"
+            git --no-pager diff --stat assets/icons
+            exit 1
+          fi
+
+  e2e:
+    name: Browser tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      # Drives the real static server, so the service worker, relative paths
+      # and offline behaviour are exercised exactly as GitHub Pages serves them.
+      - name: Run browser tests
+        run: npm run test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
