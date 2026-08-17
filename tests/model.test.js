@@ -385,7 +385,7 @@ test('sanitizeGame repairs a hand-mangled payload', () => {
   assert.match(repaired.players[0].color, /^#[0-9a-f]{6}$/i);
   assert.equal(repaired.cfg.ptsBid, M.defaultConfig().ptsBid, 'a non-numeric score falls back to the default');
   assert.equal(repaired.cfg.banFrom, M.MAX_CARDS);
-  assert.equal(repaired.planSpec.shape, 'down');
+  assert.equal(repaired.planSpec.shape, M.defaultPlanSpec().shape);
   assert.equal(repaired.planSpec.parity, 'all');
   assert.equal(repaired.rounds.length, 1);
   assert.equal(repaired.rounds[0].cards, M.MAX_CARDS);

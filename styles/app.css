@@ -1048,13 +1048,17 @@ main {
   height: 1rem;
 }
 
-.check input:checked + .check__box {
+/* `.rostertick` is the same control without a written label, so it shares
+   every state rule rather than reimplementing them a shade differently. */
+.check input:checked + .check__box,
+.rostertick input:checked + .check__box {
   background: var(--brass);
   border-color: var(--brass);
   color: var(--on-brass);
 }
 
-.check input:focus-visible + .check__box {
+.check input:focus-visible + .check__box,
+.rostertick input:focus-visible + .check__box {
   outline: 2.5px solid var(--brass);
   outline-offset: 2px;
 }
@@ -2762,6 +2766,37 @@ button.phase.is-complete:hover {
   }
 }
 
+/* The roster's "always seat this person" tick. It reuses the checkbox box
+   from `.check` but drops the label, because the column header names it once
+   for the whole list instead of repeating it on every row. */
+.rostertick {
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  cursor: pointer;
+}
+
+.rostertick input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The name field and the button share a line as soon as there is room; on a
+   narrow phone the field takes the width and the button drops below it. */
+.rosteradd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+.rosteradd .input {
+  flex: 1 1 8rem;
+  min-width: 0;
+}
+
 .seat__remove {
   display: grid;
   place-items: center;
@@ -2774,6 +2809,50 @@ button.phase.is-complete:hover {
 .seat__remove svg {
   width: 1.125rem;
   height: 1.125rem;
+}
+
+/* ---------------------------------------------------------- autocomplete */
+
+/* Parented to <body> and positioned from script, because every panel in this
+   app clips its contents to keep its corners round — a popup rendered inside
+   one would be a popup with its bottom half missing. */
+.suggest {
+  position: fixed;
+  z-index: 60;
+  max-height: 15rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0;
+  padding: var(--s1);
+  list-style: none;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-2);
+}
+
+.suggest[hidden] {
+  display: none;
+}
+
+.suggest__option {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: var(--s1) var(--s3);
+  border-radius: var(--radius-sm);
+  font-size: var(--t-lead);
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+/* One highlight for both the pointer and the arrow keys: the active option is
+   the one Enter would take, whichever way it was reached. */
+.suggest__option:hover,
+.suggest__option.is-active {
+  background: var(--brass-soft);
+  color: var(--brass-strong);
 }
 
 /* --------------------------------------------------------------- utility */

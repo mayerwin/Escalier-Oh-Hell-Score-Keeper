@@ -7,11 +7,13 @@
  */
 
 import { el, icon } from './../dom.js';
-import { formatDate, formatNumber, t } from './../i18n.js';
+import { formatNumber, suggestGameName, t } from './../i18n.js';
 import { toast } from './../sheet.js';
 import * as M from './../model.js';
+import * as R from './../roster.js';
 import * as store from './../store.js';
 import { sortable } from './../sortable.js';
+import { autocomplete } from './../suggest.js';
 import { check, heading, hint, panel, pip, points, row, seg, stepper } from './../ui.js';
 
 const DEFAULT_SEATS = 4;
@@ -23,11 +25,27 @@ export function resetDraft() {
 }
 
 function newDraft() {
+  // The regulars sit down by themselves, in the order they were put in. With
+  // nobody marked as a regular this is the same four empty seats as before.
+  const regulars = R.regulars(store.state.settings.roster);
+  const seats = regulars.length
+    ? Math.min(Math.max(regulars.length, M.MIN_PLAYERS), M.MAX_PLAYERS)
+    : DEFAULT_SEATS;
+
+  const players = Array.from({ length: seats }, (_, i) => ({
+    name: regulars[i] ? regulars[i].name : '',
+    color: M.PALETTE[i],
+  }));
+
   return {
     name: '',
-    players: Array.from({ length: DEFAULT_SEATS }, (_, i) => ({ name: '', color: M.PALETTE[i] })),
+    players,
     cfg: M.defaultConfig(),
-    planSpec: M.defaultPlanSpec(),
+    // The tallest hand starts at everything one deck can deal to this many
+    // players, which is the shape most tables actually play.
+    planSpec: { ...M.defaultPlanSpec(), maxCards: M.maxCardsFor(players.length) },
+    /** Set once the tallest hand is chosen by hand; it stops tracking then. */
+    maxPinned: false,
     /**
      * The player who deals the first hand, held by reference rather than by
      * seat number: reordering or removing a player must not silently hand the
@@ -37,6 +55,15 @@ function newDraft() {
     /** When true the tick column designates the opener rather than the dealer. */
     pickOpener: false,
   };
+}
+
+/**
+ * Keep the tallest hand at the deck's limit while the table is still being
+ * built — but never move a number the user has set themselves.
+ */
+function syncMaxCards(d) {
+  if (d.maxPinned) return;
+  d.planSpec.maxCards = M.maxCardsFor(d.players.length);
 }
 
 function ensureDraft() {
@@ -58,8 +85,67 @@ function seatLabel(d, index) {
   return d.players[index].name.trim() || t('setup.players.placeholder', { n: index + 1 });
 }
 
+/**
+ * One seat's name box, wired to the roster.
+ *
+ * Typing does not re-render — that would move the caret to the end of what is
+ * being typed. Picking a suggestion does, because at that point the name is
+ * finished and the deal summary below is showing a stale one; `data-fk` puts
+ * the caret straight back into this same box.
+ */
+function seatInput(d, index) {
+  const label = t('setup.players.placeholder', { n: index + 1 });
+  const input = el('input', {
+    class: 'seat__input',
+    type: 'text',
+    maxlength: R.MAX_NAME,
+    value: d.players[index].name,
+    placeholder: label,
+    'aria-label': label,
+    dataset: { fk: `seat:${index}` },
+    onInput: (event) => {
+      d.players[index].name = event.target.value;
+    },
+  });
+
+  autocomplete(input, {
+    label: t('settings.roster.suggestions'),
+    source: () =>
+      R.suggest(
+        store.state.settings.roster,
+        input.value,
+        // Everyone already at the table, this seat aside.
+        d.players.filter((_, i) => i !== index).map((p) => p.name)
+      ).map((entry) => entry.name),
+    onPick: (name) => {
+      d.players[index].name = name;
+      store.render();
+    },
+  });
+
+  return input;
+}
+
 function playersPanel(d) {
   const box = panel();
+
+  // Deciding *what* the tick column means comes before reading the column, so
+  // the switch sits above the list rather than in a section below it.
+  box.appendChild(
+    el(
+      'div',
+      { class: 'panel__pad' },
+      check({
+        label: t('setup.deal.leadFollows'),
+        checked: d.pickOpener,
+        onChange: (value) => {
+          d.pickOpener = value;
+          store.render();
+        },
+      }),
+      hint(d.pickOpener ? t('setup.deal.leadPick') : t('setup.deal.hint'))
+    )
+  );
 
   // Name the pick column. It was an icon-only button whose meaning you had to
   // infer from the highlight, which is not a thing to make anyone guess.
@@ -102,18 +188,7 @@ function playersPanel(d) {
           icon('grip')
         ),
         pip(player.color, index + 1),
-        el('input', {
-          class: 'seat__input',
-          type: 'text',
-          maxlength: 24,
-          value: player.name,
-          placeholder: t('setup.players.placeholder', { n: index + 1 }),
-          'aria-label': t('setup.players.placeholder', { n: index + 1 }),
-          // No re-render on input: that would move the caret to the end.
-          onInput: (event) => {
-            d.players[index].name = event.target.value;
-          },
-        }),
+        seatInput(d, index),
         el(
           'button',
           {
@@ -145,6 +220,7 @@ function playersPanel(d) {
                   // If the dealer themselves was removed, the deal falls back
                   // to the first seat; otherwise it stays with the same person.
                   if (!d.players.includes(d.dealer)) d.dealer = d.players[0];
+                  syncMaxCards(d);
                   store.render();
                 },
               },
@@ -182,6 +258,7 @@ function playersPanel(d) {
             const used = new Set(d.players.map((p) => p.color));
             const color = M.PALETTE.find((c) => !used.has(c)) || M.PALETTE[d.players.length % M.PALETTE.length];
             d.players.push({ name: '', color });
+            syncMaxCards(d);
             store.render();
           },
         },
@@ -191,38 +268,27 @@ function playersPanel(d) {
     )
   );
 
-  return box;
-}
-
-function dealPanel(d) {
-  const dealer = seatLabel(d, dealerIndex(d));
-  const opener = seatLabel(d, openerSeat(d));
-
-  return panel(
+  // Who ends up dealing and who ends up opening, spelled out under the list
+  // that decides it — the one sentence that confirms the taps did what was
+  // intended.
+  box.appendChild(
     el(
       'div',
-      { class: 'panel__pad' },
-      hint(d.pickOpener ? t('setup.deal.leadPick') : t('setup.deal.hint')),
-      check({
-        label: t('setup.deal.leadFollows'),
-        checked: d.pickOpener,
-        onChange: (value) => {
-          d.pickOpener = value;
-          store.render();
-        },
-      }),
+      { class: 'panel__pad panel__pad--top0' },
       el(
         'p',
         // A stable hook: the summary used to be found by searching for the
         // word "deals", which now also appears as a column caption.
         { class: 'hint dealsummary' },
-        el('b', { text: dealer }),
+        el('b', { text: seatLabel(d, dealerIndex(d)) }),
         el('span', { text: ` ${t('play.dealsBadge')} · ` }),
-        el('b', { text: opener }),
+        el('b', { text: seatLabel(d, openerSeat(d)) }),
         el('span', { text: ` ${t('play.opensBadge')}` })
       )
     )
   );
+
+  return box;
 }
 
 function stairsPanel(d) {
@@ -240,6 +306,8 @@ function stairsPanel(d) {
         label: t('setup.stairs.max'),
         onChange: (v) => {
           d.planSpec.maxCards = v;
+          // Chosen deliberately; stop following the seat count from here on.
+          d.maxPinned = true;
           store.render();
         },
       })
@@ -418,12 +486,17 @@ function rulePanel(d) {
 export function renderSetup() {
   const d = ensureDraft();
 
+  // "Friday evening, 14 August 2025" — and "morning" or "afternoon" when it is
+  // one of those. Shown as the placeholder and used verbatim if the field is
+  // left empty, so the default name is already the one worth keeping.
+  const suggestedName = suggestGameName();
+
   const nameInput = el('input', {
     class: 'input',
     type: 'text',
     maxlength: 40,
     value: d.name,
-    placeholder: t('setup.name.placeholder'),
+    placeholder: suggestedName,
     'aria-label': t('setup.name.label'),
     onInput: (event) => {
       d.name = event.target.value;
@@ -439,9 +512,6 @@ export function renderSetup() {
     heading(t('setup.players.title')),
     hint(t('setup.players.hint')),
     playersPanel(d),
-
-    heading(t('setup.deal.title')),
-    dealPanel(d),
 
     heading(t('setup.stairs.title')),
     stairsPanel(d),
@@ -471,7 +541,7 @@ export function renderSetup() {
               color: p.color,
             }));
             const game = M.createGame({
-              name: d.name.trim() || t('setup.name.auto', { date: formatDate(Date.now()) }),
+              name: d.name.trim() || suggestedName,
               players,
               cfg: d.cfg,
               plan,
@@ -482,6 +552,9 @@ export function renderSetup() {
             game.firstDealerId = game.players[seat].id;
             M.normalizeDealers(game);
 
+            // Anyone actually named is now somebody this device knows, so the
+            // next game can offer them. Placeholder seats are not people.
+            store.learnPlayers(d.players.map((p) => p.name.trim()).filter(Boolean));
             store.adoptGame(game);
             resetDraft();
             store.setView('play');

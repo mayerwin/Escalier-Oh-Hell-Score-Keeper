@@ -9,10 +9,12 @@ import { el, icon } from './../dom.js';
 import { LANGUAGES, formatNumber, t } from './../i18n.js';
 import { confirmSheet, toast } from './../sheet.js';
 import * as M from './../model.js';
+import * as R from './../roster.js';
 import * as storage from './../storage.js';
 import * as store from './../store.js';
+import { sortable } from './../sortable.js';
 import { REPO_URL, VERSION } from './../version.js';
-import { check, heading, hint, panel, row, seg, stepper } from './../ui.js';
+import { check, heading, hint, panel, pip, row, seg, stepper } from './../ui.js';
 import { openExportSheet, openShareSheet } from './share.js';
 
 function languagePanel() {
@@ -43,6 +45,145 @@ function languagePanel() {
       )
     )
   );
+}
+
+/**
+ * The people this device knows.
+ *
+ * Deliberately the same row shape as a seat on the setup screen — grip, pip,
+ * name, one control, remove — because it is the same list seen a step earlier,
+ * and the order set here is the order they sit down in.
+ */
+function rosterPanel() {
+  const list = store.state.settings.roster;
+  const box = panel();
+  box.classList.add('roster');
+
+  if (list.length) {
+    box.appendChild(
+      el(
+        'div',
+        { class: 'seathead', 'aria-hidden': 'true' },
+        el('span'),
+        el('span'),
+        el('span'),
+        el('span', { class: 'seat__collabel', text: t('settings.roster.column') }),
+        el('span')
+      )
+    );
+  }
+
+  list.forEach((entry, index) => {
+    box.appendChild(
+      el(
+        'div',
+        { class: 'seat', dataset: { sortIndex: index } },
+        el(
+          'button',
+          {
+            type: 'button',
+            class: 'seat__grip',
+            'data-sort-handle': '',
+            dataset: { fk: `rostergrip:${index}` },
+            'aria-label': t('a11y.reorder', { name: entry.name }),
+            title: t('a11y.reorder', { name: entry.name }),
+          },
+          icon('grip')
+        ),
+        pip(M.PALETTE[index % M.PALETTE.length], index + 1),
+        el('input', {
+          class: 'seat__input',
+          type: 'text',
+          maxlength: R.MAX_NAME,
+          value: entry.name,
+          'aria-label': t('board.addPlayer.name'),
+          dataset: { fk: `roster:${index}` },
+          // Committed when the box is left, not on every keystroke: renaming
+          // through the store re-renders, and re-rendering mid-word would put
+          // the caret back at the end of it.
+          onChange: (event) => {
+            // A refused rename snaps the old name back, which on its own looks
+            // like the app losing what was typed.
+            if (!store.renameInRoster(index, event.target.value)) toast(t('settings.roster.refused'));
+          },
+        }),
+        el(
+          'label',
+          { class: 'rostertick' },
+          el('input', {
+            type: 'checkbox',
+            checked: entry.always,
+            'aria-label': t('a11y.rosterAlways', { name: entry.name }),
+            onChange: (event) => store.setRosterAlways(index, event.target.checked),
+          }),
+          el('span', { class: 'check__box' }, icon('check', { weight: 3 }))
+        ),
+        el(
+          'button',
+          {
+            type: 'button',
+            class: 'seat__remove',
+            'aria-label': `${t('common.remove')}${t('common.joiner')}${entry.name}`,
+            onClick: () => store.removeFromRoster(index),
+          },
+          icon('trash')
+        )
+      )
+    );
+  });
+
+  sortable(box, {
+    describe: (from, to) => t('a11y.moved', { name: list[from] ? list[from].name : '', n: to + 1, total: list.length }),
+    onMove: (from, to) => store.moveInRoster(from, to),
+  });
+
+  if (!list.length) {
+    box.appendChild(el('div', { class: 'panel__pad' }, el('p', { class: 'hint', text: t('settings.roster.empty') })));
+  }
+
+  // Adding is a form rather than a button, because the thing being added is a
+  // name and there is nowhere else to type it.
+  const field = el('input', {
+    class: 'input',
+    type: 'text',
+    maxlength: R.MAX_NAME,
+    placeholder: t('settings.roster.add'),
+    'aria-label': t('settings.roster.add'),
+  });
+
+  const submit = () => {
+    const name = field.value.trim();
+    if (!name) return;
+    field.value = '';
+    store.addToRoster(name);
+  };
+
+  box.appendChild(
+    el(
+      'div',
+      { class: 'panel__pad rosteradd' },
+      field,
+      el(
+        'button',
+        {
+          type: 'button',
+          class: 'btn btn--dashed',
+          disabled: list.length >= R.MAX_ROSTER,
+          onClick: submit,
+        },
+        icon('userPlus'),
+        el('span', { text: t('common.add') })
+      )
+    )
+  );
+
+  field.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    submit();
+  });
+
+  return box;
 }
 
 function gamePanel(game) {
@@ -221,6 +362,10 @@ export function renderSettings() {
       )
     )
   );
+
+  root.appendChild(heading(t('settings.roster')));
+  root.appendChild(hint(t('settings.roster.hint')));
+  root.appendChild(rosterPanel());
 
   if (game) {
     root.appendChild(heading(t('settings.game')));

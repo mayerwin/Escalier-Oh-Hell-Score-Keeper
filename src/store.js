@@ -8,6 +8,7 @@
  */
 
 import * as M from './model.js';
+import * as R from './roster.js';
 import * as storage from './storage.js';
 import { detectLanguage, getLanguage, setLanguage, t } from './i18n.js';
 import { toast } from './sheet.js';
@@ -100,6 +101,48 @@ export function setLanguageSetting(code) {
 
 export function effectiveLanguage() {
   return state.settings.lang || detectLanguage();
+}
+
+/* ----------------------------------------------------------------- roster */
+
+/**
+ * Every roster edit goes through here. The roster module is pure and returns a
+ * new list, so this is the one place that decides to keep it.
+ */
+function editRoster(fn) {
+  state.settings.roster = fn(state.settings.roster);
+  persistSettings();
+  render();
+}
+
+export const addToRoster = (name) => editRoster((list) => R.add(list, name, false));
+
+/** Returns false if the new name was refused, so the view can say why. */
+export function renameInRoster(index, name) {
+  let ok = false;
+  editRoster((list) => {
+    const result = R.rename(list, index, name);
+    ok = result.ok;
+    return result.list;
+  });
+  return ok;
+}
+
+export const setRosterAlways = (index, always) => editRoster((list) => R.setAlways(list, index, always));
+export const removeFromRoster = (index) => editRoster((list) => R.remove(list, index));
+export const moveInRoster = (from, to) => editRoster((list) => R.move(list, from, to));
+
+/**
+ * Remember the names a game was started with.
+ *
+ * Silent by design, and never re-renders: it runs while the new game is being
+ * adopted, and a roster the user has to curate by hand is a roster that stays
+ * empty. Nobody is promoted to a regular by playing — that stays a deliberate
+ * tick in settings.
+ */
+export function learnPlayers(names) {
+  state.settings.roster = R.learn(state.settings.roster, names);
+  persistSettings();
 }
 
 /* ------------------------------------------------------------ persistence */

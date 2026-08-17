@@ -1,7 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { MESSAGES, LANGUAGES, SUPPORTED, DEFAULT_LANGUAGE, t, setLanguage, detectLanguage, normalizeTag } from '../src/i18n.js';
+import {
+  MESSAGES,
+  LANGUAGES,
+  SUPPORTED,
+  DEFAULT_LANGUAGE,
+  t,
+  setLanguage,
+  detectLanguage,
+  normalizeTag,
+  dayPart,
+  suggestGameName,
+} from '../src/i18n.js';
 
 const BASE = MESSAGES[DEFAULT_LANGUAGE];
 const BASE_KEYS = Object.keys(BASE).sort();
@@ -116,5 +127,50 @@ test('tag normalisation is case and separator insensitive', () => {
 test('setLanguage rejects unknown codes without throwing', () => {
   setLanguage('klingon');
   assert.equal(t('common.ok'), 'OK');
+  setLanguage('en');
+});
+
+/* ------------------------------------------------------- game name suggestion */
+
+/** Local time, so the boundaries are tested where the code reads them. */
+function at(hour, day = 15) {
+  return new Date(2025, 7, day, hour, 30).getTime(); // 15 August 2025 is a Friday
+}
+
+test('the day part follows the evening past midnight, not the clock', () => {
+  assert.equal(dayPart(new Date(at(9))).part, 'morning');
+  assert.equal(dayPart(new Date(at(13))).part, 'afternoon');
+  assert.equal(dayPart(new Date(at(19))).part, 'evening');
+  // Half past one in the morning is still Friday night to everyone who is there.
+  const late = dayPart(new Date(2025, 7, 16, 1, 30));
+  assert.equal(late.part, 'evening');
+  assert.equal(late.day.getDate(), 15, 'the date rolls back to the evening it belongs to');
+});
+
+test('the day part boundaries are 5, 12 and 18 exactly', () => {
+  assert.equal(dayPart(new Date(2025, 7, 15, 4, 59)).part, 'evening');
+  assert.equal(dayPart(new Date(2025, 7, 15, 5, 0)).part, 'morning');
+  assert.equal(dayPart(new Date(2025, 7, 15, 11, 59)).part, 'morning');
+  assert.equal(dayPart(new Date(2025, 7, 15, 12, 0)).part, 'afternoon');
+  assert.equal(dayPart(new Date(2025, 7, 15, 17, 59)).part, 'afternoon');
+  assert.equal(dayPart(new Date(2025, 7, 15, 18, 0)).part, 'evening');
+});
+
+test('the suggested game name names the evening and its date', () => {
+  setLanguage('fr');
+  const name = suggestGameName(at(20));
+  assert.match(name, /^Soirée du vendredi 15 août 2025$/);
+
+  setLanguage('en');
+  assert.match(suggestGameName(at(9)), /^Morning of /);
+  assert.match(suggestGameName(at(14)), /^Afternoon of /);
+
+  // Every locale must produce something, with no placeholder left behind.
+  for (const code of SUPPORTED) {
+    setLanguage(code);
+    const suggested = suggestGameName(at(20));
+    assert.ok(suggested.length > 8, `${code} produced "${suggested}"`);
+    assert.doesNotMatch(suggested, /[{}]/, `${code} left a placeholder unfilled`);
+  }
   setLanguage('en');
 });

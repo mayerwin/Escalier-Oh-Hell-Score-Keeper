@@ -83,8 +83,13 @@ export function defaultConfig() {
   };
 }
 
+/**
+ * `maxCards` is only a fallback here: the model has no idea how many players
+ * are at the table, and the real ceiling is what one deck can deal to them.
+ * Setup picks that instead, from `maxCardsFor`.
+ */
 export function defaultPlanSpec() {
-  return { shape: 'down', maxCards: 8, minCards: 1, parity: 'all' };
+  return { shape: 'updown', maxCards: 8, minCards: 1, parity: 'all' };
 }
 
 /** Largest number of cards each player can receive from a single deck. */
@@ -746,7 +751,7 @@ export function sanitizeGame(game) {
   for (const k of ['ptsBid', 'ptsTrick', 'ptsMiss']) repairNumber(k, -99, 99);
   const planDefaults = defaultPlanSpec();
   game.planSpec = { ...planDefaults, ...(game.planSpec || {}) };
-  if (!SHAPES.includes(game.planSpec.shape)) game.planSpec.shape = 'down';
+  if (!SHAPES.includes(game.planSpec.shape)) game.planSpec.shape = planDefaults.shape;
   if (!PARITIES.includes(game.planSpec.parity)) game.planSpec.parity = 'all';
   for (const key of ['maxCards', 'minCards']) {
     const raw = game.planSpec[key];

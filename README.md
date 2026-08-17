@@ -56,9 +56,15 @@ enforced from a configurable hand size upwards. The forbidden number is struck o
 own chips, so nobody has to do the arithmetic. It can be overridden deliberately, and switched off.
 
 **Mid-game reality.** Add a latecomer with any starting score, sit a player out for one round, apply
-a one-off bonus or penalty, remove a player, reorder the table, rename anyone, or correct any round
-already played. Changes that silently rewrite recorded results sit behind an editing lock; changes
-that are just part of playing do not.
+a one-off bonus or penalty, remove a player, drag the table into a new order, rename anyone, or
+correct any round already played. Changes that silently rewrite recorded results sit behind an
+editing lock; changes that are just part of playing do not.
+
+**A table that remembers itself.** The people you play with are kept in settings, in the order they
+sit. Tick the regulars and they are already seated when you start a new game; the rest are offered
+as autocomplete the moment you start typing a name. Names are learned from the games you play, so
+the list fills itself. A new game also arrives already named — *Soirée du vendredi 14 août* — and
+with the staircase reaching as high as one deck can deal to however many are playing.
 
 **Configurable scoring.** Bonus for a made bid, points per trick, penalty per trick of deviation,
 and whether tricks still count on a missed bid. Setup shows a worked example that updates as you

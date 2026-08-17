@@ -35,6 +35,10 @@ test('seats can be dragged into a new order', async ({ page }) => {
 
   const seats = page.locator('.seat');
   const grip = seats.nth(0).locator('.seat__grip');
+  // Settle the scroll position before measuring: the two boxes have to be read
+  // in the same coordinate space the mouse will move through.
+  await seats.nth(3).scrollIntoViewIfNeeded();
+  await grip.scrollIntoViewIfNeeded();
   const from = await grip.boundingBox();
   const target = await seats.nth(2).boundingBox();
 
@@ -101,8 +105,14 @@ test.describe('a narrow phone', () => {
 test('the staircase preview follows the chosen shape', async ({ page }) => {
   await startSetup(page, ['Ana', 'Ben']);
   const stairsPanel = page.locator('.panel').filter({ hasText: 'Tallest hand' });
-  await stairsPanel.locator('.seg button', { hasText: 'Up then down' }).click();
-  await expect(page.locator('.hint').filter({ hasText: 'rounds:' })).toContainText('1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 7');
+  const preview = page.locator('.hint').filter({ hasText: 'rounds:' });
+
+  // Four seats by default, so one deck stretches to thirteen cards each, and
+  // the staircase climbs to that and comes back down.
+  await expect(preview).toContainText('25 rounds: 1 · 2 · 3');
+
+  await stairsPanel.locator('.seg button', { hasText: 'Down' }).first().click();
+  await expect(preview).toContainText('13 rounds: 13 · 12 · 11');
 });
 
 test.describe('the staircase is editable mid-game', () => {

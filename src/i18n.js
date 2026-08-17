@@ -123,6 +123,42 @@ export function formatDate(ms) {
   return new Intl.DateTimeFormat(current, { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(ms));
 }
 
+/** "vendredi 14 août 2025" — the weekday is what makes a game name recognisable. */
+export function formatLongDate(ms) {
+  return new Intl.DateTimeFormat(current, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(ms));
+}
+
+/**
+ * Which part of the day a moment belongs to, as people reckon it rather than
+ * as a clock does.
+ *
+ * The boundaries are 5, 12 and 18. The first one is what matters: a game
+ * started at one in the morning belongs to *last* night, and calling it
+ * "Saturday morning" would be both wrong and unrecognisable to whoever was
+ * there. So before 5am the day rolls back as well.
+ */
+export function dayPart(date) {
+  const hour = date.getHours();
+  if (hour < 5) return { part: 'evening', day: new Date(date.getTime() - 24 * 60 * 60 * 1000) };
+  if (hour < 12) return { part: 'morning', day: date };
+  if (hour < 18) return { part: 'afternoon', day: date };
+  return { part: 'evening', day: date };
+}
+
+/** A name a game can keep: "Soirée du vendredi 14 août 2025". */
+export function suggestGameName(ms = Date.now()) {
+  const { part, day } = dayPart(new Date(ms));
+  return t('setup.name.suggest', {
+    part: t(`setup.name.part.${part}`),
+    date: formatLongDate(day.getTime()),
+  });
+}
+
 export function formatDateTime(ms) {
   return new Intl.DateTimeFormat(current, {
     day: 'numeric',

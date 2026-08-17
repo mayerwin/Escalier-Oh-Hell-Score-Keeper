@@ -15,6 +15,7 @@
  */
 
 import { sanitizeGame } from './model.js';
+import * as roster from './roster.js';
 
 const PREFIX = 'escalier:v2:';
 const GAME_PREFIX = `${PREFIX}game:`;
@@ -212,6 +213,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   theme: 'auto', // auto | light | dark
   lastGameId: null,
   chartMode: 'cumulative',
+  roster: [], // known players: [{ name, always }], in seating order
 });
 
 export function loadSettings() {
@@ -221,6 +223,7 @@ export function loadSettings() {
   if (!['cumulative', 'round'].includes(s.chartMode)) s.chartMode = 'cumulative';
   if (typeof s.lang !== 'string') s.lang = null;
   if (typeof s.lastGameId !== 'string') s.lastGameId = null;
+  s.roster = roster.sanitize(s.roster);
   return s;
 }
 
