@@ -37,21 +37,92 @@ export function buildSeries(game, mode) {
   };
 }
 
-function niceBounds(values, mode) {
+function gcd(a, b) {
+  let x = Math.abs(Math.round(a));
+  let y = Math.abs(Math.round(b));
+  while (y) [x, y] = [y, x % y];
+  return x;
+}
+
+/**
+ * The smallest step this game's scores can actually move in.
+ *
+ * With the default 5/5/5 every score is a multiple of five, so an axis with a
+ * gridline at 41 is labelling a number nobody can reach. The unit is the gcd
+ * of the scoring dials, narrowed by any manual adjustment or carry-in actually
+ * present — one +3 bonus somewhere in the game genuinely does make every whole
+ * number reachable, and the axis should say so rather than lie tidily.
+ */
+export function scoreUnit(game) {
+  let unit = 0;
+  for (const key of ['ptsBid', 'ptsTrick', 'ptsMiss']) unit = gcd(unit, game.cfg[key] || 0);
+  for (const round of game.rounds) {
+    // Entries are keyed by player id, not indexed by seat.
+    for (const entry of Object.values(round.entries || {})) {
+      if (entry && Number.isFinite(entry.adj) && entry.adj !== 0) unit = gcd(unit, entry.adj);
+    }
+  }
+  for (const player of game.players) {
+    if (Number.isFinite(player.carryIn) && player.carryIn !== 0) unit = gcd(unit, player.carryIn);
+  }
+  return unit || 1;
+}
+
+/**
+ * Gridlines on whole units, at a readable spacing.
+ *
+ * The step is the unit times 1, 2 or 5 (times a power of ten) — the multiples
+ * people read without doing arithmetic — chosen as the smallest that keeps the
+ * line count down. The bounds then snap outwards to that step, which is also
+ * what gives the plot its breathing room; there is no separate padding, so
+ * every edge of the chart is a labelled value rather than an arbitrary one.
+ */
+function candidateSteps(unit) {
+  const steps = new Set();
+  for (let power = 0; power < 10; power += 1) {
+    for (const m of [1, 2, 5]) {
+      const nice = m * 10 ** power;
+      // A round number that happens to land on whole units — 20 when scores
+      // move in fives — is the best of both, and beats 25.
+      if (nice % unit === 0) steps.add(nice);
+      // Always available, and the only option when the unit is something like
+      // 3, which no round number is a multiple of.
+      steps.add(unit * nice);
+    }
+  }
+  return [...steps].sort((a, b) => a - b);
+}
+
+export function axisTicks(lo, hi, unit, maxLines = 6) {
+  const snap = (step) => ({ step, lo: Math.floor(lo / step) * step, hi: Math.ceil(hi / step) * step });
+
+  // A range of zero height would divide by zero when values are projected
+  // onto it, so it is opened out by a step either side before anything else.
+  const widen = (bounds) =>
+    bounds.hi > bounds.lo ? bounds : { step: bounds.step, lo: bounds.lo - bounds.step, hi: bounds.hi + bounds.step };
+
+  for (const step of candidateSteps(unit)) {
+    const bounds = widen(snap(step));
+    if ((bounds.hi - bounds.lo) / step + 1 <= maxLines) return bounds;
+  }
+  return widen(snap(unit * 10 ** 10));
+}
+
+function axisFor(values, mode, unit) {
   const all = values.slice();
+  // Cumulative totals are read against zero, so it is always on the chart.
   if (mode === 'cumulative') all.push(0);
   let lo = Math.min(...all);
   let hi = Math.max(...all);
   if (!Number.isFinite(lo) || !Number.isFinite(hi)) {
     lo = 0;
-    hi = 1;
+    hi = unit;
   }
   if (lo === hi) {
-    lo -= 5;
-    hi += 5;
+    lo -= unit;
+    hi += unit;
   }
-  const pad = (hi - lo) * 0.12;
-  return { lo: lo - pad, hi: hi + pad };
+  return axisTicks(lo, hi, unit);
 }
 
 /**
@@ -67,7 +138,7 @@ export function renderChart(game, mode) {
   // the bounds — a late joiner with a negative carry-in would otherwise start
   // off the top of the chart.
   const flat = series.flatMap((s) => (mode === 'cumulative' ? [s.opening, ...s.values] : s.values));
-  const { lo, hi } = niceBounds(flat, mode);
+  const { lo, hi, step } = axisFor(flat, mode, scoreUnit(game));
 
   // Cumulative lines start from the opening score at x=0, so they need one
   // more slot than there are rounds.
@@ -88,9 +159,9 @@ export function renderChart(game, mode) {
     preserveAspectRatio: 'xMidYMid meet',
   });
 
-  // Horizontal gridlines with value labels.
-  for (let k = 0; k <= 4; k += 1) {
-    const value = lo + ((hi - lo) * k) / 4;
+  // Horizontal gridlines with value labels, every one of them a score that
+  // can actually be reached.
+  for (let value = lo; value <= hi + step / 2; value += step) {
     const gy = y(value);
     root.appendChild(
       svg('line', {
@@ -113,9 +184,8 @@ export function renderChart(game, mode) {
           fill: 'var(--ink-4)',
           'font-family': 'var(--font-ui)',
         },
-        // `|| 0` collapses negative zero: a gridline just below the axis
-        // rounds to -0, which Intl faithfully prints as "-0".
-        formatNumber(Math.round(value) || 0)
+        // `|| 0` collapses negative zero, which Intl faithfully prints as "-0".
+        formatNumber(value || 0)
       )
     );
   }
@@ -135,8 +205,8 @@ export function renderChart(game, mode) {
   }
 
   // Round numbers along the bottom, thinned out so they never collide.
-  const step = Math.max(1, Math.ceil(n / 7));
-  for (let r = 1; r <= n; r += step) {
+  const everyNth = Math.max(1, Math.ceil(n / 7));
+  for (let r = 1; r <= n; r += everyNth) {
     const px = mode === 'cumulative' ? x(r) : x(r - 1);
     root.appendChild(
       svg(

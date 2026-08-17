@@ -472,9 +472,15 @@ main {
   height: 1.25rem;
 }
 
+/* A tab bar keeps the tinted pill rather than a filled block — filling one
+   fifth of a persistent bar with accent colour shouts over the screen it is
+   navigating. It earns its contrast from weight and a brass rule instead, so
+   the selected tab is still legible without relying on hue alone. */
 .tab[data-selected='true'] {
   color: var(--brass-strong);
   background: var(--brass-soft);
+  font-weight: 800;
+  box-shadow: inset 0 2px 0 var(--brass-strong);
 }
 
 .tab:disabled {
@@ -2557,10 +2563,25 @@ button.phase.is-complete:hover {
   transition: all var(--fast) var(--ease);
 }
 
+/* Chosen, in the same language every other choice in this app speaks: filled
+   brass, not a tint of it. A wash behind brass text differs from the unchosen
+   state by a shade — legible on a bright desk, guesswork on a dim one, and
+   invisible to anyone who cannot separate the two hues. A filled control
+   differs by luminance, which survives all three. */
 .picker button[aria-pressed='true'] {
-  border-color: var(--brass);
-  background: var(--brass-soft);
-  color: var(--brass-strong);
+  border-color: var(--brass-strong);
+  background: linear-gradient(to bottom, var(--brass), var(--brass-strong));
+  color: var(--on-brass);
+  font-weight: 700;
+  box-shadow: var(--shadow-brass);
+}
+
+/* The player's own colour has to stay readable on top of the brass, so its
+   dark inner ring becomes a light one. */
+.picker button[aria-pressed='true'] .dot {
+  box-shadow:
+    inset 0 0 0 2px rgba(0, 0, 0, 0.2),
+    0 0 0 1.5px var(--on-brass);
 }
 
 .picker__label {
@@ -2848,11 +2869,12 @@ button.phase.is-complete:hover {
 }
 
 /* One highlight for both the pointer and the arrow keys: the active option is
-   the one Enter would take, whichever way it was reached. */
+   the one Enter would take, whichever way it was reached — so it is filled,
+   the way a native combobox fills its highlighted row, rather than tinted. */
 .suggest__option:hover,
 .suggest__option.is-active {
-  background: var(--brass-soft);
-  color: var(--brass-strong);
+  background: var(--brass);
+  color: var(--on-brass);
 }
 
 /* --------------------------------------------------------------- utility */
