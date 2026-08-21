@@ -317,15 +317,37 @@ button {
   place-items: center;
   width: var(--col-act);
   height: var(--col-act);
+  border: 0;
+  padding: 0;
   border-radius: var(--radius);
   background: linear-gradient(155deg, var(--brass), var(--brass-strong));
   color: var(--on-brass);
   box-shadow: var(--shadow-brass);
+  cursor: pointer;
+  transition: transform var(--fast) var(--ease), filter var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mark:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(168, 118, 31, 0.35);
+}
+
+.mark:active:not(:disabled) {
+  transform: translateY(0) scale(0.95);
+  filter: brightness(0.95);
+}
+
+.mark:disabled {
+  cursor: default;
+  opacity: 0.9;
 }
 
 .mark svg {
   width: 1.375rem;
   height: 1.375rem;
+  pointer-events: none;
 }
 
 /* The wordmark and the screen title are two lines of one lockup, sharing a

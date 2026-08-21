@@ -99,6 +99,20 @@ test('cancelling setup returns you where you started', async ({ page }) => {
   await expect(page.locator('#main')).toContainText('New game');
 });
 
+test('clicking the top-left mark logo opens the games library and can go back', async ({ page }) => {
+  await seedGame(page, { players: ['Ana', 'Ben'], plan: [2] });
+  await expect(page.locator('.roundhead__title')).toBeVisible();
+
+  // Click the top-left brass mark
+  await page.locator('button.mark').click();
+  await expect(page.locator('#main')).toContainText('My games');
+  await expect(page.locator('.topbar__game')).toContainText('My games');
+
+  // Back arrow is shown and returns to the game
+  await backButton(page).click();
+  await expect(page.locator('.roundhead__title')).toBeVisible();
+});
+
 test.describe('desktop', () => {
   test.use({ viewport: { width: 1280, height: 900 } });
 

@@ -140,7 +140,20 @@ function renderTopbar() {
         },
         icon('arrowLeft')
       )
-    : el('div', { class: 'mark', 'aria-hidden': 'true' }, icon('stairs', { weight: 2.4 }));
+    : el(
+        'button',
+        {
+          type: 'button',
+          class: 'mark',
+          'aria-label': t('menu.games'),
+          title: t('menu.games'),
+          disabled: view === 'games',
+          onClick: () => {
+            if (view !== 'games') store.setView('games');
+          },
+        },
+        icon('stairs', { weight: 2.4 })
+      );
 
   // The wordmark and the screen title are two lines of one lockup rather than
   // two faces jammed side by side on a shared centre line. They share a left
