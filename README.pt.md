@@ -76,9 +76,18 @@ Feito especialmente para a mesa real de jogo:
 
 ---
 
-## 🌐 Documentação noutros idiomas
+## 🌐 Suporte Multilingue
 
-[English](README.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Español](README.es.md) · [Italiano](README.it.md) · [Português](README.pt.md).
+Completamente traduzido em **6 idiomas** com formatação nativa de plurais e datas através da API `Intl`:
+
+| Idioma | Código | Documentação | Seletor na Aplicação |
+|:---|:---:|:---:|:---:|
+| 🇵🇹 **Português (PT)** | `pt` | [README.pt.md](README.pt.md) | Deteção automática ou nas Definições |
+| 🇬🇧 **English** | `en` | [README.md](README.md) | Deteção automática ou nas Definições |
+| 🇫🇷 **Français** | `fr` | [README.fr.md](README.fr.md) | Deteção automática ou nas Definições |
+| 🇩🇪 **Deutsch** | `de` | [README.de.md](README.de.md) | Deteção automática ou nas Definições |
+| 🇪🇸 **Español** | `es` | [README.es.md](README.es.md) | Deteção automática ou nas Definições |
+| 🇮🇹 **Italiano** | `it` | [README.it.md](README.it.md) | Deteção automática ou nas Definições |
 
 ---
 

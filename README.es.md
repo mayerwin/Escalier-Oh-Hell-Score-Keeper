@@ -82,9 +82,18 @@ La mayoría de los anotadores asumen un juego estático. En una mesa real:
 
 ---
 
-## 🌐 Documentación en otros idiomas
+## 🌐 Soporte Multilingüe
 
-[English](README.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Español](README.es.md) · [Italiano](README.it.md) · [Português](README.pt.md).
+Completamente traducido a **6 idiomas** con formato nativo de plurales y fechas a través de la API `Intl`:
+
+| Idioma | Código | Documentación | Selector en la App |
+|:---|:---:|:---:|:---:|
+| 🇪🇸 **Español** | `es` | [README.es.md](README.es.md) | Detección automática o en Ajustes |
+| 🇬🇧 **English** | `en` | [README.md](README.md) | Detección automática o en Ajustes |
+| 🇫🇷 **Français** | `fr` | [README.fr.md](README.fr.md) | Detección automática o en Ajustes |
+| 🇩🇪 **Deutsch** | `de` | [README.de.md](README.de.md) | Detección automática o en Ajustes |
+| 🇮🇹 **Italiano** | `it` | [README.it.md](README.it.md) | Detección automática o en Ajustes |
+| 🇵🇹 **Português (PT)** | `pt` | [README.pt.md](README.pt.md) | Detección automática o en Ajustes |
 
 ---
 

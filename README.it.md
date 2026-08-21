@@ -76,9 +76,18 @@ Pensato appositamente per il tavolo di gioco reale:
 
 ---
 
-## 🌐 Documentazione multilingue
+## 🌐 Supporto Multilingue
 
-[English](README.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Español](README.es.md) · [Italiano](README.it.md) · [Português](README.pt.md).
+Completamente tradotto in **6 lingue** con formattazione nativa di plurali e date tramite l'API `Intl`:
+
+| Lingua | Codice | Documentazione | Selettore nell'App |
+|:---|:---:|:---:|:---:|
+| 🇮🇹 **Italiano** | `it` | [README.it.md](README.it.md) | Rilevamento automatico o in Impostazioni |
+| 🇬🇧 **English** | `en` | [README.md](README.md) | Rilevamento automatico o in Impostazioni |
+| 🇫🇷 **Français** | `fr` | [README.fr.md](README.fr.md) | Rilevamento automatico o in Impostazioni |
+| 🇩🇪 **Deutsch** | `de` | [README.de.md](README.de.md) | Rilevamento automatico o in Impostazioni |
+| 🇪🇸 **Español** | `es` | [README.es.md](README.es.md) | Rilevamento automatico o in Impostazioni |
+| 🇵🇹 **Português (PT)** | `pt` | [README.pt.md](README.pt.md) | Rilevamento automatico o in Impostazioni |
 
 ---
 

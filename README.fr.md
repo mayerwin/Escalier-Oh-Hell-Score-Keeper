@@ -131,14 +131,14 @@ Le calcul des points suit la formule standard de l'Escalier / Oh Hell :
 
 L'application est intégralement traduite dans **6 langues** avec gestion native des pluriels et formats régionaux via l'API `Intl` :
 
-| Langue | Code | Documentation | Sélecteur |
+| Langue | Code | Documentation | Sélecteur dans l'App |
 |:---|:---:|:---:|:---:|
-| 🇫🇷 **Français** | `fr` | [README.fr.md](README.fr.md) | Intégré (Détection auto ou forçage) |
-| 🇬🇧 **English** | `en` | [README.md](README.md) | Built-in (Auto-detect or override) |
-| 🇩🇪 **Deutsch** | `de` | [README.de.md](README.de.md) | Integriert |
-| 🇪🇸 **Español** | `es` | [README.es.md](README.es.md) | Integrado |
-| 🇮🇹 **Italiano** | `it` | [README.it.md](README.it.md) | Integrato |
-| 🇵🇹 **Português (PT)** | `pt` | [README.pt.md](README.pt.md) | Integrado |
+| 🇫🇷 **Français** | `fr` | [README.fr.md](README.fr.md) | Détection auto ou choix dans les réglages |
+| 🇬🇧 **English** | `en` | [README.md](README.md) | Détection auto ou choix dans les réglages |
+| 🇩🇪 **Deutsch** | `de` | [README.de.md](README.de.md) | Détection auto ou choix dans les réglages |
+| 🇪🇸 **Español** | `es` | [README.es.md](README.es.md) | Détection auto ou choix dans les réglages |
+| 🇮🇹 **Italiano** | `it` | [README.it.md](README.it.md) | Détection auto ou choix dans les réglages |
+| 🇵🇹 **Português (PT)** | `pt` | [README.pt.md](README.pt.md) | Détection auto ou choix dans les réglages |
 
 ---
 

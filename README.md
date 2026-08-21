@@ -129,14 +129,14 @@ Customize point formulas with a live worked example:
 
 Fully localized into **6 languages** with native plural and date formatting backed by the `Intl` API:
 
-| Language | Code | Documentation | Selector |
+| Language | Code | Documentation | Selector in App |
 |:---|:---:|:---:|:---:|
-| 🇬🇧 **English** | `en` | [README.md](README.md) | Built-in (Auto-detect or override) |
-| 🇫🇷 **Français** | `fr` | [README.fr.md](README.fr.md) | Intégré (Détection auto ou forçage) |
-| 🇩🇪 **Deutsch** | `de` | [README.de.md](README.de.md) | Integriert |
-| 🇪🇸 **Español** | `es` | [README.es.md](README.es.md) | Integrado |
-| 🇮🇹 **Italiano** | `it` | [README.it.md](README.it.md) | Integrato |
-| 🇵🇹 **Português (PT)** | `pt` | [README.pt.md](README.pt.md) | Integrado |
+| 🇬🇧 **English** | `en` | [README.md](README.md) | Auto-detect or manual in Settings |
+| 🇫🇷 **Français** | `fr` | [README.fr.md](README.fr.md) | Auto-detect or manual in Settings |
+| 🇩🇪 **Deutsch** | `de` | [README.de.md](README.de.md) | Auto-detect or manual in Settings |
+| 🇪🇸 **Español** | `es` | [README.es.md](README.es.md) | Auto-detect or manual in Settings |
+| 🇮🇹 **Italiano** | `it` | [README.it.md](README.it.md) | Auto-detect or manual in Settings |
+| 🇵🇹 **Português (PT)** | `pt` | [README.pt.md](README.pt.md) | Auto-detect or manual in Settings |
 
 ---
 

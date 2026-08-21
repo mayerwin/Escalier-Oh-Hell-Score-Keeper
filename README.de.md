@@ -104,8 +104,16 @@ Am echten Spieltisch:
 
 ## 🌐 Mehrsprachigkeit
 
-Vollständig lokalisiert in **6 Sprachen** über die `Intl`-API:
-[English](README.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Español](README.es.md) · [Italiano](README.it.md) · [Português](README.pt.md).
+Vollständig lokalisiert in **6 Sprachen** mit nativer Plural- und Datumsformatierung über die `Intl`-API:
+
+| Sprache | Code | Dokumentation | Sprachauswahl in der App |
+|:---|:---:|:---:|:---:|
+| 🇩🇪 **Deutsch** | `de` | [README.de.md](README.de.md) | Automatische Erkennung oder in den Einstellungen |
+| 🇬🇧 **English** | `en` | [README.md](README.md) | Automatische Erkennung oder in den Einstellungen |
+| 🇫🇷 **Français** | `fr` | [README.fr.md](README.fr.md) | Automatische Erkennung oder in den Einstellungen |
+| 🇪🇸 **Español** | `es` | [README.es.md](README.es.md) | Automatische Erkennung oder in den Einstellungen |
+| 🇮🇹 **Italiano** | `it` | [README.it.md](README.it.md) | Automatische Erkennung oder in den Einstellungen |
+| 🇵🇹 **Português (PT)** | `pt` | [README.pt.md](README.pt.md) | Automatische Erkennung oder in den Einstellungen |
 
 ---
 
