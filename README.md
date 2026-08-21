@@ -1,204 +1,214 @@
 <div align="center">
 
-# L'Escalier
+# 🃏 L'Escalier
 
-**An offline-first score keeper for Oh Hell and its many cousins**<br>
-<sub>Wizard · Skull King · Rikiki · Chorão · Stiche Raten</sub>
+**An offline-first score keeper for Oh Hell (L'Escalier) and its many cousins**<br>
+<sub>Wizard · Skull King · Rikiki · Nominate · Stiche Raten · Barbu · Tarneeb · Chorão</sub>
 
-[![Play it](https://img.shields.io/badge/play-mayerwin.github.io-a8761f?style=for-the-badge)](https://mayerwin.github.io/Escalier-Oh-Hell-Score-Keeper/)
+<br>
 
-[![CI](https://github.com/mayerwin/Escalier-Oh-Hell-Score-Keeper/actions/workflows/ci.yml/badge.svg)](https://github.com/mayerwin/Escalier-Oh-Hell-Score-Keeper/actions/workflows/ci.yml)
-[![Pages](https://github.com/mayerwin/Escalier-Oh-Hell-Score-Keeper/actions/workflows/pages.yml/badge.svg)](https://github.com/mayerwin/Escalier-Oh-Hell-Score-Keeper/actions/workflows/pages.yml)
-[![Licence: MIT](https://img.shields.io/badge/licence-MIT-2c6a44.svg)](LICENSE)
-![Runtime dependencies: none](https://img.shields.io/badge/runtime%20deps-none-2467a8.svg)
-![Languages: 6](https://img.shields.io/badge/languages-EN%20FR%20DE%20ES%20IT%20PT-8e44ad.svg)
+[![Play it online](https://img.shields.io/badge/▶%20Play%20online-mayerwin.github.io-a8761f?style=for-the-badge)](https://mayerwin.github.io/Escalier-Oh-Hell-Score-Keeper/)
+
+<br>
+
+[![English](https://img.shields.io/badge/Language-English%20🇬🇧-blue?style=flat-square)](#)
+[![Français](https://img.shields.io/badge/Langue-Français%20🇫🇷-lightgrey?style=flat-square)](README.fr.md)
+[![Deutsch](https://img.shields.io/badge/Sprache-Deutsch%20🇩🇪-lightgrey?style=flat-square)](README.de.md)
+[![Español](https://img.shields.io/badge/Idioma-Español%20🇪🇸-lightgrey?style=flat-square)](README.es.md)
+[![Italiano](https://img.shields.io/badge/Lingua-Italiano%20🇮🇹-lightgrey?style=flat-square)](README.it.md)
+[![Português](https://img.shields.io/badge/Língua-Português%20🇵🇹-lightgrey?style=flat-square)](README.pt.md)
+
+<br>
+
+[![CI](https://img.shields.io/github/actions/workflow/status/mayerwin/Escalier-Oh-Hell-Score-Keeper/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/mayerwin/Escalier-Oh-Hell-Score-Keeper/actions/workflows/ci.yml)
+[![Pages](https://img.shields.io/github/actions/workflow/status/mayerwin/Escalier-Oh-Hell-Score-Keeper/pages.yml?branch=main&label=GitHub%20Pages&style=flat-square)](https://github.com/mayerwin/Escalier-Oh-Hell-Score-Keeper/actions/workflows/pages.yml)
+[![Licence: MIT](https://img.shields.io/badge/licence-MIT-2c6a44.svg?style=flat-square)](LICENSE)
+![Runtime dependencies: 0](https://img.shields.io/badge/runtime%20deps-0-2467a8.svg?style=flat-square)
+![Languages: 6](https://img.shields.io/badge/languages-EN%20FR%20DE%20ES%20IT%20PT-8e44ad.svg?style=flat-square)
 
 </div>
 
 ---
 
-Built for the table rather than for the browser: one hand, poor light, and somebody already dealing
-the next round.
+## 🎯 Why L'Escalier ?
 
-It works completely offline, keeps every game on your own device, and can hand a finished game to
-the rest of the table as a single link.
+Most score keepers assume a game is decided before it starts: a rigid ladder of rounds, a fixed list of players, and no way back once a round is recorded. Real games around a table are not like that.
 
----
+In real life:
+- 🚶 Somebody arrives late, or somebody has to leave early.
+- 🃏 The table decides to add one more hand at 1 card at the end for suspense.
+- ✏️ A score was entered wrong three rounds ago and needs fixing.
+- 💡 The light is low, you hold the phone in one hand while someone is already dealing the next round.
 
-## Why it exists
-
-Most score keepers assume the game is decided before it starts: a fixed ladder of rounds, a fixed
-list of players, and no way back once a round is recorded. Real games are not like that. Somebody
-arrives late, somebody has to leave, the table decides to add one more hand at one card, or a round
-gets entered wrong three rounds ago.
-
-So the round list here — the *escalier*, the staircase — is a first-class, editable thing for the
-whole life of the game.
-
-## What it does
-
-**The staircase.** The round plan is drawn as an actual flight of stairs and stays editable at any
-point: insert a round, resize a hand to any number of cards, duplicate one, skip one, jump the play
-head forward, or rebuild the whole unplayed tail from a new shape. Rounds already played are always
-preserved.
-
-**Two explicit phases per round.** First every bid, in bidding order with the dealer last. Then, and
-only then, the tricks each player actually won, with a live counter that must reach zero before the
-round can be recorded. The two are never mixed on one screen.
-
-**The deal, shown plainly.** Every round names its dealer and its opener, badged on the player cards
-and listed on every step of the staircase. Tap either to change it — designating the dealer and
-designating the opener are two views of the same fact, so the app offers both and keeps them
-consistent.
-
-**The dealer's burden.** The "screw the dealer" rule (bids may not total the number of tricks) is
-enforced from a configurable hand size upwards. The forbidden number is struck out on the dealer's
-own chips, so nobody has to do the arithmetic. It can be overridden deliberately, and switched off.
-
-**Mid-game reality.** Add a latecomer with any starting score, sit a player out for one round, apply
-a one-off bonus or penalty, remove a player, drag the table into a new order, rename anyone, or
-correct any round already played. Changes that silently rewrite recorded results sit behind an
-editing lock; changes that are just part of playing do not.
-
-**A table that remembers itself.** The people you play with are kept in settings, in the order they
-sit. Tick the regulars and they are already seated when you start a new game; the rest are offered
-as autocomplete the moment you start typing a name. Names are learned from the games you play, so
-the list fills itself. A new game also arrives already named — *Soirée du vendredi 14 août* — and
-with the staircase reaching as high as one deck can deal to however many are playing.
-
-**Configurable scoring.** Bonus for a made bid, points per trick, penalty per trick of deviation,
-and whether tricks still count on a missed bid. Setup shows a worked example that updates as you
-turn the dials.
-
-**Six languages.** English, French, German, Spanish, Italian and Portuguese, picked from the browser
-by default and overridable in settings. Numbers, dates, lists and plurals all go through `Intl`, so
-each language gets its own correct plural rules.
-
-**Two themes.** Ruled ledger paper by day, card-table baize by night, following the system by
-default.
-
-**Sharing and export.** The whole game — players, staircase, every bid and trick, the scoring rules —
-is packed, deflated and base64url-encoded into the URL fragment. A finished six-player, twenty-round
-game lands in roughly 400 characters, so it fits in any chat message and needs no server, no account
-and no database. Scores also export as CSV (long form plus a summary block) or JSON.
-
-**Genuinely offline.** Every module, font and icon is precached by a service worker; the typefaces
-are self-hosted rather than pulled from a CDN. Once the page has loaded once, going offline changes
-nothing at all. Games are stored in `localStorage`, which is synchronous — so a save completes even
-if the phone is locked mid-round.
-
-**Always the current build.** The precache is content-addressed: `tools/build-sw.mjs` hashes every
-file and writes the manifest into `sw.js`, so a cache entry's key changes whenever its bytes do, and
-a stale body can never be served. Because the hashes live in the worker, any content change also
-changes the worker, which is what makes the browser fetch a new one. Precache requests bypass the
-HTTP cache, so a short `max-age` cannot backfill a new release with the previous one's files. Nobody
-ever needs to hard refresh, and an update costs one request per changed file rather than a full
-re-download.
-
-## Privacy
-
-There is no backend. No analytics, no cookies, no network requests to anywhere. Your games stay in
-your browser until you choose to share one, and a shared link travels in the URL *fragment*, which
-browsers never send to a server.
-
-## Running it locally
-
-No build step. The app ships zero runtime dependencies — any static file server will do:
-
-```sh
-npm run serve          # or: python -m http.server 8000
-```
-
-Then open the printed URL. A service worker needs `localhost` or HTTPS, so opening `index.html`
-straight off the filesystem will work but will not exercise offline caching.
-
-To reproduce production conditions — the app under a project sub-path, with the `max-age` GitHub
-Pages actually sends:
-
-```sh
-node tools/serve.mjs 8347 --base=/Escalier-Oh-Hell-Score-Keeper/ --max-age=600
-```
-
-If you add, rename or delete a file, refresh the precache manifest:
-
-```sh
-npm run build:sw       # npm test fails if it is stale
-```
-
-## Tests
-
-```sh
-npm install            # dev tooling only; the app itself needs nothing
-npm test               # unit tests, node --test, no framework
-npm run test:e2e       # browser tests, Playwright
-npm run test:all       # both
-```
-
-**Unit tests** cover the parts where a bug would quietly corrupt somebody's score: the scoring
-engine, dealer rotation, staircase edits, the share codec's round-trip, CSV escaping, translation
-completeness, and a build-integrity suite that fails if a new module is not added to the service
-worker's precache list — the mistake that would work perfectly online and break only offline.
-
-**Browser tests** drive the real static server, so the service worker, relative paths and offline
-behaviour are exercised exactly as GitHub Pages serves them. They cover the two-phase round flow,
-the dealer's forbidden bid, staircase edits mid-game, the back-navigation model, a share link
-round-tripping into a clean browser profile, CSV download, and a reload with the network cut.
-
-`e2e/deployment.spec.js` runs its own server under a project sub-path with a real `max-age`, which
-is the only way to reach the two failure modes production has and a root-served, no-cache test never
-will: relative-path and scope errors, and a precache backfilled from the HTTP cache with the
-previous release's files.
-
-Both suites gate the deploy.
-
-Playwright is the only dependency in the repo, and it is `devDependencies` — nothing ships to the
-browser but the files in `src/`, `styles/` and `assets/`.
-
-## How it is put together
-
-Vanilla ES modules, no framework and no bundler, because a static score pad should still run in five
-years without a toolchain.
-
-| Path | What lives there |
-| --- | --- |
-| `src/model.js` | The engine: scoring, dealer rotation, staircase edits, validation. Pure, DOM-free, fully tested. |
-| `src/store.js` | The single mutable state object and every action that changes it. |
-| `src/dom.js` | Element builder and the icon set. No `innerHTML` anywhere in the app. |
-| `src/views/` | One module per screen, each returning a DOM node. |
-| `src/i18n.js`, `src/locales/` | Messages and `Intl`-backed plurals for the six languages. |
-| `src/share.js` | The compact wire format, deflate, base64url. |
-| `tests/` | Unit tests (`node --test`). |
-| `e2e/` | Browser tests (Playwright). |
-| `tools/gen-icons.mjs` | Generates the PNG icons from source with no image library. |
-
-Two conventions worth knowing:
-
-- **Round results are keyed by player id, never by seat index.** Reordering, adding or removing a
-  player therefore cannot shift somebody else's score onto the wrong row.
-- **Recorded rounds anchor the deal.** Re-deriving dealers after an edit never rewrites a round that
-  has already been played.
-
-## Credits
-
-Feature parity was informed by [bdhoine/oh-hell-score](https://github.com/bdhoine/oh-hell-score).
-
-Typefaces: [Fraunces](https://fonts.google.com/specimen/Fraunces) and
-[Instrument Sans](https://fonts.google.com/specimen/Instrument+Sans), both under the SIL Open Font
-License and bundled in `assets/fonts/`.
-
-## Licence
-
-Released under the [MIT Licence](LICENSE). The bundled typefaces keep their own
-[SIL Open Font License](assets/fonts/), which is included alongside them.
+**L'Escalier was built for the card table:**
+- 📶 **100% Offline-First (PWA)**: Works completely without a network connection, fully precached.
+- 🔒 **Complete Privacy**: Zero backend, zero accounts, zero cookies, instant synchronous local storage.
+- 🔗 **Zero-Server Sharing**: An entire finished game (players, staircase, all bids & tricks, scoring rules) compresses into a single compact URL fragment (~400 characters).
 
 ---
+
+## 📸 Interface Showcase
 
 <div align="center">
-<sub>
 
-**© 2026 Erwin Mayer** · [github.com/mayerwin](https://github.com/mayerwin)
+| 1️⃣ Setup — Players & Seating | 2️⃣ Setup — Staircase & Rules |
+|:---:|:---:|
+| <img src="docs/screenshots/en/01_setup_players.png" width="360" alt="New Game Setup — Players" /> | <img src="docs/screenshots/en/02_setup_rules.png" width="360" alt="New Game Setup — Staircase and Rules" /> |
+| *Player seating, initial dealer selection, quick-add.* | *Custom staircase patterns, live preview and scoring sliders.* |
 
-Made for a card table.
+| 3️⃣ Bidding Phase | 4️⃣ Tricks Phase |
+|:---:|:---:|
+| <img src="docs/screenshots/en/03_play_bids.png" width="360" alt="Bidding Phase" /> | <img src="docs/screenshots/en/04_play_tricks.png" width="360" alt="Tricks Phase" /> |
+| *One-tap chips, dealer's forbidden bid struck out (🚫), opener badge.* | *Live remaining tricks countdown, instant score delta calculations.* |
 
-</sub>
+| 5️⃣ Staircase Flight | 6️⃣ Standings & Scoreboard |
+|:---:|:---:|
+| <img src="docs/screenshots/en/05_stairs.png" width="360" alt="Staircase Flight View" /> | <img src="docs/screenshots/en/06_board.png" width="360" alt="Scoreboard and Standings" /> |
+| *Interactive flight of stairs (1..10..1), active round marker, deal rotation.* | *Podium ranks 🥇🥈🥉, cumulative scores, hit rate, full round grid.* |
+
+| 7️⃣ Evolution Chart | 8️⃣ Dark Mode & Settings |
+|:---:|:---:|
+| <img src="docs/screenshots/en/07_chart.png" width="360" alt="Score Evolution Chart" /> | <img src="docs/screenshots/en/08_settings_dark.png" width="360" alt="Dark Baize Theme Settings" /> |
+| *Interactive curves showing each player's score progression over time.* | *Night-time card table baize theme, 6 languages, persistent player roster.* |
+
+</div>
+
+---
+
+## ✨ Key Features
+
+### 🪜 Fully Editable Staircase
+The round plan is an interactive flight of stairs:
+- ➕ Insert a round anywhere.
+- 🔁 Resize a hand to any number of cards.
+- ⏭️ Skip a round or jump the playhead forward.
+- 📐 Rebuild the unplayed tail from a new shape (ascending, descending, pyramid, round-trip...).
+- 🛡️ Played rounds are always strictly preserved in history.
+
+### ⚖️ Two Explicit Phases Per Round
+1. **Phase 1: Bids** — Every player calls their bid in order (opener first, dealer last).
+2. **Phase 2: Tricks Won** — Record actual tricks won with a live countdown counter that must reach zero before completing the round.
+
+### 🚫 "Screw the Dealer" Rule
+- The classic rule forbidding the dealer from making total bids equal the trick count is enforced automatically.
+- The forbidden number is **struck out on the dealer's own chips**, removing all mental arithmetic from the table.
+- Configurable hand size threshold or can be turned off entirely.
+
+### 👥 Real-World Table Dynamics
+- **Late Arrivals**: Add a player mid-game with a custom starting score.
+- **Early Departures**: Sit a player out without breaking trick totals of archived rounds.
+- **Sit-out a Round**: Temporarily pause a player for one hand.
+- **Adjustments**: Apply a custom one-off bonus or penalty.
+- **Table Reorder**: Drag and reorder seating positions easily.
+
+### 📇 Table Memory & Roster
+- Save regular players in settings.
+- Checked regulars are automatically seated when starting a new game.
+- Smart autocomplete learns names as you play.
+
+### 🧮 Configurable Scoring
+Customize point formulas with a live worked example:
+- **Bonus for made bid** (e.g. +5 pts).
+- **Points per trick** (e.g. +5 pts / trick).
+- **Penalty per trick of deviation** (e.g. -5 pts / trick diff).
+- **Strict mode** (whether tricks still award points on a missed bid).
+
+---
+
+## 🧮 Scoring Calculation
+
+| Outcome | Formula | Example (Bonus=5, Trick=5, Penalty=5) |
+|:---|:---|:---|
+| **Made Bid** $(B = T)$ | $\text{Bonus} + (T \times \text{Pts/Trick})$ | Bid 2, Won 2 $\rightarrow 5 + (2 \times 5) = \mathbf{+15\text{ pts}}$ |
+| **Missed Bid** $(B \neq T)$ | $- (\lvert B - T \rvert \times \text{Penalty})$ | Bid 2, Won 0 $\rightarrow - (2 \times 5) = \mathbf{-10\text{ pts}}$ |
+| **Missed Bid (Strict Mode)** | $- (\lvert B - T \rvert \times \text{Penalty}) + (T \times \text{Pts/Trick})$ | Bid 2, Won 1 $\rightarrow -5 + 5 = \mathbf{0\text{ pt}}$ |
+
+---
+
+## 🌐 Multilingual Support
+
+Fully localized into **6 languages** with native plural and date formatting backed by the `Intl` API:
+
+| Language | Code | Documentation | Selector |
+|:---|:---:|:---:|:---:|
+| 🇬🇧 **English** | `en` | [README.md](README.md) | Built-in (Auto-detect or override) |
+| 🇫🇷 **Français** | `fr` | [README.fr.md](README.fr.md) | Intégré (Détection auto ou forçage) |
+| 🇩🇪 **Deutsch** | `de` | [README.de.md](README.de.md) | Integriert |
+| 🇪🇸 **Español** | `es` | [README.es.md](README.es.md) | Integrado |
+| 🇮🇹 **Italiano** | `it` | [README.it.md](README.it.md) | Integrato |
+| 🇵🇹 **Português (PT)** | `pt` | [README.pt.md](README.pt.md) | Integrado |
+
+---
+
+## 🎨 Dual Hand-Crafted Themes
+
+- 📜 **Ledger Paper (Light)**: Elegant lined notebook styling for daytime play.
+- 🌲 **Card-Table Baize (Dark)**: Deep green felt and vintage gold accents for night games and battery saving.
+
+---
+
+## 🚀 Running Locally
+
+No build step or bundler needed. Pure vanilla ES modules:
+
+```sh
+# 1. Clone the repository
+git clone https://github.com/mayerwin/Escalier-Oh-Hell-Score-Keeper.git
+cd Escalier-Oh-Hell-Score-Keeper
+
+# 2. Start the local server
+npm run serve
+# or with Python:
+# python -m http.server 8000
+```
+
+Open the printed URL (e.g. `http://localhost:8000`) in your browser or install as a PWA on your smartphone.
+
+---
+
+## 🧪 Testing & Quality
+
+```sh
+npm install            # Dev tooling only (Playwright)
+npm test               # Unit tests (Node test runner)
+npm run test:e2e       # Automated browser tests (Playwright)
+npm run test:all       # Run all tests
+```
+
+- **Unit tests**: Scoring logic, dealer rotation, Service Worker cache integrity, share URL codec, CSV export.
+- **Browser tests**: End-to-end round flow, forbidden bids, mid-game staircase edits, offline reloading.
+
+---
+
+## 🏗️ Code Structure
+
+```
+Escalier-Oh-Hell-Score-Keeper/
+├── assets/             # Bundled local fonts (Fraunces, Instrument Sans) and icons
+├── docs/screenshots/   # Localized documentation screenshots (en, fr, de, es, it, pt)
+├── src/
+│   ├── model.js        # Pure game engine (scoring, rotation, validation)
+│   ├── store.js        # Reactive state manager and actions
+│   ├── i18n.js         # Translation engine & Intl plurals
+│   ├── locales/        # Translation dictionaries (en, fr, de, es, it, pt)
+│   ├── share.js        # URL compression (deflate-raw, base64url)
+│   ├── export.js       # CSV and JSON exporters
+│   ├── dom.js          # Safe DOM builder without innerHTML
+│   └── views/          # Modular views (play, stairs, board, chart, setup...)
+├── styles/app.css      # Modern CSS stylesheet (variables, themes)
+├── sw.js               # Content-addressed offline PWA Service Worker
+└── tools/              # Maintenance scripts (serve, build-sw, screenshot capture)
+```
+
+---
+
+## 📜 License & Credits
+
+- **Source Code**: Released under the [MIT License](LICENSE).
+- **Author**: **Erwin Mayer** ([github.com/mayerwin](https://github.com/mayerwin)).
+- **Typefaces**: [Fraunces](https://fonts.google.com/specimen/Fraunces) and [Instrument Sans](https://fonts.google.com/specimen/Instrument+Sans) under the SIL Open Font License.
+- **Credits**: Inspired by traditional Oh Hell / L'Escalier card rules and [oh-hell-score](https://github.com/bdhoine/oh-hell-score).
+
+<div align="center">
+<sub>Made for a real card table. 🃏✨</sub>
 </div>
